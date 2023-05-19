@@ -3315,6 +3315,7 @@ dependencies = [
  "once_cell",
  "ouroboros 0.15.6",
  "proptest",
+ "rand 0.7.3",
  "rayon",
  "serde 1.0.149",
  "serde_json",
