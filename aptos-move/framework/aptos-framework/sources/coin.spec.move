@@ -1,6 +1,31 @@
 spec aptos_framework::coin {
     spec module {
         pragma verify = true;
+        global supply<CoinType>: num;
+        global aggregate_supply<CoinType>: num;
+        apply TotalSupplyEqSum to * except
+            initialize_supply_config, allow_supply_upgrades,
+            initialize, initialize_internal, initialize_with_parallelizable_supply;
+        apply TotalSupplyNoChange to * except
+            initialize_supply_config, allow_supply_upgrades, mint,
+            burn, initialize, initialize_internal, initialize_with_parallelizable_supply;
+    }
+
+    spec schema TotalSupplyEqSum<CoinType> {
+        invariant
+            (option::spec_is_some(global<CoinInfo<CoinType>>(type_info::type_of<CoinType>().account_address).supply)) ==>
+                supply<CoinType> + aggregate_supply<CoinType> ==
+                    optional_aggregator::optional_aggregator_value
+                        (option::spec_borrow(global<CoinInfo<CoinType>>(type_info::type_of<CoinType>().account_address).supply));
+    }
+
+    spec schema TotalSupplyNoChange<CoinType> {
+        ensures
+            (option::spec_is_some(global<CoinInfo<CoinType>>(type_info::type_of<CoinType>().account_address).supply)) ==>
+                optional_aggregator::optional_aggregator_value
+                    (option::spec_borrow(global<CoinInfo<CoinType>>(type_info::type_of<CoinType>().account_address).supply)) ==
+            old(optional_aggregator::optional_aggregator_value
+                (option::spec_borrow(global<CoinInfo<CoinType>>(type_info::type_of<CoinType>().account_address).supply)));
     }
 
     spec AggregatableCoin {
