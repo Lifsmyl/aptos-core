@@ -13,6 +13,7 @@ use std::{
     thread,
     time::Instant,
 };
+use std::time::{SystemTime, UNIX_EPOCH};
 
 mod conflict_detector;
 pub mod dependency_analyzer;
@@ -70,12 +71,16 @@ impl ShardedBlockPartitioner {
 
     pub fn partition(
         &self,
-        transactions: Vec<AnalyzedTransaction>,
+        transactions: Box<Vec<AnalyzedTransaction>>,
     ) -> (
         HashMap<usize, Vec<(usize, AnalyzedTransaction)>>,
         HashMap<usize, Vec<(usize, AnalyzedTransaction)>>,
     ) {
         let now = Instant::now();
+        let current_time = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Failed to retrieve current time").as_millis();
+        println!("partition start time {:?}", current_time);
         let total_txns = transactions.len();
         let txns_per_shard = (total_txns as f64 / self.num_shards as f64).ceil() as usize;
 
@@ -128,6 +133,10 @@ impl ShardedBlockPartitioner {
         }
 
         println!("Receiving Partitioning Messages took: {:?}", now.elapsed());
+        let current_time = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Failed to retrieve current time").as_millis();
+        println!("partition end time {:?}", current_time);
         (accpeted_txns, rejected_txns)
     }
 }
@@ -269,7 +278,7 @@ mod tests {
                 .push(create_signed_p2p_transaction(&mut sender, vec![&receiver]).remove(0));
         }
         let partitioner = ShardedBlockPartitioner::new(4);
-        let (accepted_txns, rejected_txns) = partitioner.partition(transactions.clone());
+        let (accepted_txns, rejected_txns) = partitioner.partition(Box::new(transactions.clone()));
         let mut expected_txn_statuses = HashMap::new();
         for index in 0..num_txns {
             if index < 3 {
@@ -303,7 +312,7 @@ mod tests {
             receivers.iter().collect::<Vec<&TestAccount>>(),
         );
         let partitioner = ShardedBlockPartitioner::new(4);
-        let (accepted_txns, rejected_txns) = partitioner.partition(transactions.clone());
+        let (accepted_txns, rejected_txns) = partitioner.partition(Box::new(transactions.clone()));
         // Create a map of transaction index to its expected status, first 3 transactions are expected to be accepted
         // and the rest are expected to be rejected.
         // println!("Accepted txns: {:?}", accepted_txns);

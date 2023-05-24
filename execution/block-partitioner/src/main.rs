@@ -9,10 +9,11 @@ use clap::Parser;
 use rand::{rngs::OsRng, Rng};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::{sync::Mutex, time::Instant};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Parser)]
 struct Args {
-    #[clap(long, default_value = "1000000")]
+    #[clap(long, default_value = "2000000")]
     pub num_accounts: usize,
 
     #[clap(long, default_value = "100000")]
@@ -25,8 +26,6 @@ struct Args {
     pub num_shards: usize,
 }
 
-
-
 fn main() {
     println!("Starting the block partitioning benchmark");
     let args = Args::parse();
@@ -37,9 +36,8 @@ fn main() {
         .map(|_i| Mutex::new(generate_test_account()))
         .collect();
     println!("Created {} accounts", num_accounts);
-
     println!("Creating {} transactions", args.block_size);
-    let transactions: Vec<AnalyzedTransaction> = (0..args.block_size)
+    let transactions: Box<Vec<AnalyzedTransaction>> = Box::new((0..args.block_size)
         .into_iter()
         .map(|_| {
             // randomly select a sender and receiver from accounts
@@ -50,14 +48,23 @@ fn main() {
             let mut sender = accounts[sender_index].lock().unwrap();
             create_signed_p2p_transaction(&mut sender, vec![&receiver]).remove(0)
         })
-        .collect();
+        .collect());
 
     // profile the time taken
     let partitioner = ShardedBlockPartitioner::new(args.num_shards);
     for _ in 0..args.num_blocks {
-        println!("Starting to partition");
         let now = Instant::now();
+        println!("Starting to partition");
+        let current_time = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Failed to retrieve current time").as_millis();
+        // print current time
+        println!("Current time: {:?}", current_time);
         let (accepted_txns, _) = partitioner.partition(transactions.clone());
+        let current_time = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Failed to retrieve current time").as_millis();
+        println!("partition end time from main {:?}", current_time);
         let elapsed = now.elapsed();
         println!("Time taken to partition: {:?}", elapsed);
         println!(

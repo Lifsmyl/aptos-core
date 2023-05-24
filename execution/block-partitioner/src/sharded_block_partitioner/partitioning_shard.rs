@@ -39,17 +39,10 @@ impl PartitioningShard {
         }
     }
 
-    fn partition_block(&self, partition_msg: PartitionBlockMsg) {
-        let PartitionBlockMsg {
-            transactions,
-            index_offset,
-        } = partition_msg;
+    fn broadcast_dependency_analysis(&self, conflict_detector: &CrossShardConflictDetector) {
         let mut now = std::time::Instant::now();
         let num_shards = self.messages_txs.len();
-
-        let mut conflict_detector = CrossShardConflictDetector::new(self.shard_id, num_shards, &transactions);
         let dependency_analysis_msg = conflict_detector.get_dependency_analysis_msg();
-
         for i in 0..num_shards {
             if i != self.shard_id {
                 self.messages_txs[i]
@@ -60,61 +53,77 @@ impl PartitioningShard {
             }
         }
         println!("Time taken for dependency analysis: {:?} for shard_id {:?}", now.elapsed(), self.shard_id);
-        now = std::time::Instant::now();
-        let mut conflict_detector = CrossShardConflictDetector::new(self.shard_id, num_shards, &transactions);
-        // Receive the dependency analysis messages from other shards
-        let mut dependency_analysis_msgs = vec![DependencyAnalysisMsg::default(); num_shards];
-        for i in 0..num_shards {
+    }
+
+    fn collect_cross_shard_dependency_analysis(&self) -> Vec<DependencyAnalysisMsg> {
+        let mut dependency_analysis_msgs = vec![DependencyAnalysisMsg::default(); self.messages_txs.len()];
+        for i in 0..self.messages_txs.len() {
             if i == self.shard_id {
                 continue;
             }
             let msg = self.message_rxs[i].recv().unwrap();
             match msg {
                 CrossShardMsg::DependencyAnalysis(dependency_analysis_msg) => {
-                    let source_shard_id = dependency_analysis_msg.source_shard_id;
-                    dependency_analysis_msgs[source_shard_id] = dependency_analysis_msg;
-                },
-                _ => {
-                    panic!(
-                        "Unexpected message {:?} received for shard id {:?}",
-                        msg, self.shard_id
-                    );
-                },
+                    dependency_analysis_msgs[i] = dependency_analysis_msg;
+                }
+                _ => panic!("Unexpected message"),
             }
         }
-        let discarded_sender_msg = conflict_detector
-            .discard_conflicting_transactions(&transactions, &dependency_analysis_msgs);
-        // broadcast discarded sender message to all shards
+        dependency_analysis_msgs
+    }
+
+    fn broadcast_discarded_senders_msg(&self, discarded_sender_msg: &DiscardedSendersMsg) {
+        let num_shards = self.messages_txs.len();
         for i in 0..num_shards {
             if i != self.shard_id {
                 self.messages_txs[i]
-                    .send(DiscardedSenders(discarded_sender_msg.clone()))
+                    .send(CrossShardMsg::DiscardedSenders(
+                        discarded_sender_msg.clone(),
+                    ))
                     .unwrap();
             }
         }
-        println!("Time taken for conflict detection: {:?} for shard_id {:?}", now.elapsed(), self.shard_id);
-        now = std::time::Instant::now();
-        // Receive the discarded sender messages from other shards
-        let mut discarded_senders_msgs = vec![DiscardedSendersMsg::default(); num_shards];
-        for i in 0..num_shards {
+    }
+
+    fn collect_cross_shard_discarded_senders(&self) -> Vec<DiscardedSendersMsg> {
+        let mut discarded_senders_msgs = vec![DiscardedSendersMsg::default(); self.messages_txs.len()];
+        for i in 0..self.messages_txs.len() {
             if i == self.shard_id {
                 continue;
             }
             let msg = self.message_rxs[i].recv().unwrap();
             match msg {
-                DiscardedSenders(discarded_sender_msg) => {
-                    let source_shard_id = discarded_sender_msg.source_shard_id;
-                    discarded_senders_msgs[source_shard_id] = discarded_sender_msg;
-                },
-                _ => {
-                    panic!("Unexpected message type");
-                },
+                CrossShardMsg::DiscardedSenders(discarded_sender_msg) => {
+                    discarded_senders_msgs[i] = discarded_sender_msg;
+                }
+                _ => panic!("Unexpected message"),
             }
         }
+        discarded_senders_msgs
+    }
+
+    fn partition_block(&self, partition_msg: PartitionBlockMsg) {
+        let PartitionBlockMsg {
+            transactions,
+            index_offset,
+        } = partition_msg;
+        let mut now = std::time::Instant::now();
+        let num_shards = self.messages_txs.len();
+
+        let mut conflict_detector = CrossShardConflictDetector::new(self.shard_id, num_shards, &transactions);
+        self.broadcast_dependency_analysis(&conflict_detector);
+        let dependency_analysis_msgs = self.collect_cross_shard_dependency_analysis();
+        let discarded_sender_msg = conflict_detector
+            .discard_conflicting_transactions(&transactions, &dependency_analysis_msgs);
+        self.broadcast_discarded_senders_msg(&discarded_sender_msg);
+        println!("Time taken for conflict detection: {:?} for shard_id {:?}", now.elapsed(), self.shard_id);
+        now = std::time::Instant::now();
+        let discarded_senders_msgs = self.collect_cross_shard_discarded_senders();
 
         let partitioning_status = conflict_detector
             .discard_discarded_sender_transactions(&transactions, &discarded_senders_msgs);
         println!("Time taken for discarding discarded sender: {:?} for shard_id {:?}", now.elapsed(), self.shard_id);
+
         now = std::time::Instant::now();
         // split the transaction into accepted and discarded statuses
         let mut accepted_txns: Vec<(usize, AnalyzedTransaction)> = Vec::new();
