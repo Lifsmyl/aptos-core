@@ -2,7 +2,7 @@
 /// primary fungible stores.
 module example_addr::coin_example {
     use aptos_framework::object;
-    use aptos_framework::fungible_asset::{Metadata, FungibleAsset};
+    use aptos_framework::fungible_asset::{Self, Metadata, FungibleAsset};
     use aptos_framework::object::Object;
     use example_addr::managed_fungible_asset;
     use std::string::utf8;
@@ -83,7 +83,6 @@ module example_addr::coin_example {
     use aptos_framework::primary_fungible_store;
     #[test_only]
     use std::signer;
-    use aptos_framework::fungible_asset;
 
     #[test(creator = @0xcafe)]
     fun test_basic_flow(creator: &signer) {
