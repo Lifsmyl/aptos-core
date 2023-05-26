@@ -155,6 +155,6 @@ pub fn verifier_config(features: &Features, _timed_features: &TimedFeatures) -> 
         max_basic_blocks_in_script: None,
         max_per_fun_meter_units: Some(1000 * 80000),
         max_per_mod_meter_units: Some(1000 * 80000),
-        use_signature_checker_v2: features.is_enabled(FeatureFlag::SIGNATURE_CHECKER_V2),
+        use_signature_checker_v2: false,
     }
 }
