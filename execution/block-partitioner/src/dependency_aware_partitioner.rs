@@ -94,7 +94,7 @@ impl<'a> PartitionerState<'a> {
                     txn_statuses.insert(index, PartitioningStatus::Accepted);
                 } else {
                     discarded_senders
-                        .entry(txn.get_sender().unwrap())
+                        .entry(txn.sender().unwrap())
                         .and_modify(|entry| {
                             if *entry > index {
                                 *entry = index;
@@ -143,7 +143,7 @@ impl BlockPartitioner for DependencyAwareUniformPartitioner {
             // of the discarded sender is less than the cur
             //
             // rent transaction.
-            if let Some(sender) = txn.get_sender() {
+            if let Some(sender) = txn.sender() {
                 if let Some(discarded_sender_index) = discarded_senders.get(&sender) {
                     if *discarded_sender_index < index {
                         txn_statuses.entry(index).and_modify(|entry| {
@@ -421,7 +421,7 @@ mod tests {
         for shard_id in accepted_txns.keys() {
             let shard = accepted_txns.get(shard_id).unwrap();
             for (_, txn) in shard {
-                let storage_locations = txn.read_hints().iter().chain(txn.write_hints().iter());
+                let storage_locations = txn.read_set().iter().chain(txn.write_set().iter());
                 for storage_location in storage_locations {
                     if storage_location_to_shard_map.contains_key(storage_location) {
                         assert_eq!(

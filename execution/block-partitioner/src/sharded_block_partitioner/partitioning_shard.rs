@@ -2,31 +2,34 @@
 // SPDX-License-Identifier: Apache-2.0
 use crate::sharded_block_partitioner::{
     conflict_detector::CrossShardConflictDetector,
-    dependency_analyzer::DependencyAnalyzer,
+    dependency_analyzer::{RWSet, RWSetWithTxnIndex},
     messages::{
-        ControlMsg, CrossShardMsg, CrossShardMsg::DiscardedSenders, DependencyAnalysisMsg,
-        DiscardedSendersMsg, PartitionBlockMsg, PartitionedBlockResponse, PartitioningStatus,
+        AddTxnsWithCrossShardDep, ControlMsg, CrossShardMsg, FilterTxnsWithCrossShardDep,
+        PartitioningBlockResponse,
     },
+    ShardId, TransactionChunk, TransactionWithDependencies,
 };
 use aptos_logger::trace;
-use aptos_types::transaction::analyzed_transaction::AnalyzedTransaction;
-use std::sync::mpsc::{Receiver, Sender};
+use std::sync::{
+    mpsc::{Receiver, Sender},
+    Arc,
+};
 
 /// A remote block executor that receives transactions from a channel and executes them in parallel.
 /// Currently it runs in the local machine and it will be further extended to run in a remote machine.
 pub struct PartitioningShard {
-    shard_id: usize,
+    shard_id: ShardId,
     control_rx: Receiver<ControlMsg>,
-    result_tx: Sender<PartitionedBlockResponse>,
+    result_tx: Sender<PartitioningBlockResponse>,
     message_rxs: Vec<Receiver<CrossShardMsg>>,
-    messages_txs: Vec<Sender<CrossShardMsg>>,
+    message_txs: Vec<Sender<CrossShardMsg>>,
 }
 
 impl PartitioningShard {
     pub fn new(
-        shard_id: usize,
+        shard_id: ShardId,
         control_rx: Receiver<ControlMsg>,
-        result_tx: Sender<PartitionedBlockResponse>,
+        result_tx: Sender<PartitioningBlockResponse>,
         message_rxs: Vec<Receiver<CrossShardMsg>>,
         messages_txs: Vec<Sender<CrossShardMsg>>,
     ) -> Self {
@@ -35,111 +38,184 @@ impl PartitioningShard {
             control_rx,
             result_tx,
             message_rxs,
-            messages_txs,
+            message_txs: messages_txs,
         }
     }
 
-    fn broadcast_dependency_analysis(&self, conflict_detector: &CrossShardConflictDetector) {
-        let mut now = std::time::Instant::now();
-        let num_shards = self.messages_txs.len();
-        let dependency_analysis_msg = conflict_detector.get_dependency_analysis_msg();
+    fn broadcast_rw_set(&self, rw_set: RWSet) {
+        let num_shards = self.message_txs.len();
         for i in 0..num_shards {
             if i != self.shard_id {
-                self.messages_txs[i]
-                    .send(CrossShardMsg::DependencyAnalysis(
-                        dependency_analysis_msg.clone(),
-                    ))
-                    .unwrap();
-            }
-        }
-        println!("Time taken for dependency analysis: {:?} for shard_id {:?}", now.elapsed(), self.shard_id);
-    }
-
-    fn collect_cross_shard_dependency_analysis(&self) -> Vec<DependencyAnalysisMsg> {
-        let mut dependency_analysis_msgs = vec![DependencyAnalysisMsg::default(); self.messages_txs.len()];
-        for i in 0..self.messages_txs.len() {
-            if i == self.shard_id {
-                continue;
-            }
-            let msg = self.message_rxs[i].recv().unwrap();
-            match msg {
-                CrossShardMsg::DependencyAnalysis(dependency_analysis_msg) => {
-                    dependency_analysis_msgs[i] = dependency_analysis_msg;
-                }
-                _ => panic!("Unexpected message"),
-            }
-        }
-        dependency_analysis_msgs
-    }
-
-    fn broadcast_discarded_senders_msg(&self, discarded_sender_msg: &DiscardedSendersMsg) {
-        let num_shards = self.messages_txs.len();
-        for i in 0..num_shards {
-            if i != self.shard_id {
-                self.messages_txs[i]
-                    .send(CrossShardMsg::DiscardedSenders(
-                        discarded_sender_msg.clone(),
-                    ))
+                self.message_txs[i]
+                    .send(CrossShardMsg::RWSetMsg(rw_set.clone()))
                     .unwrap();
             }
         }
     }
 
-    fn collect_cross_shard_discarded_senders(&self) -> Vec<DiscardedSendersMsg> {
-        let mut discarded_senders_msgs = vec![DiscardedSendersMsg::default(); self.messages_txs.len()];
-        for i in 0..self.messages_txs.len() {
+    fn collect_rw_set(&self) -> Vec<RWSet> {
+        let mut rw_set_vec = vec![RWSet::default(); self.message_txs.len()];
+        for (i, msg_rx) in self.message_rxs.iter().enumerate() {
             if i == self.shard_id {
                 continue;
             }
-            let msg = self.message_rxs[i].recv().unwrap();
+
+            let msg = msg_rx.recv().unwrap();
             match msg {
-                CrossShardMsg::DiscardedSenders(discarded_sender_msg) => {
-                    discarded_senders_msgs[i] = discarded_sender_msg;
-                }
+                CrossShardMsg::RWSetMsg(rw_set) => {
+                    rw_set_vec[i] = rw_set;
+                },
                 _ => panic!("Unexpected message"),
             }
         }
-        discarded_senders_msgs
+        rw_set_vec
     }
 
-    fn partition_block(&self, partition_msg: PartitionBlockMsg) {
-        let PartitionBlockMsg {
+    fn broadcast_rw_set_with_index(&self, rw_set_with_index: RWSetWithTxnIndex) {
+        let num_shards = self.message_txs.len();
+        for i in 0..num_shards {
+            if i != self.shard_id {
+                self.message_txs[i]
+                    .send(CrossShardMsg::RWSetWithTxnIndexMsg(
+                        rw_set_with_index.clone(),
+                    ))
+                    .unwrap();
+            }
+        }
+    }
+
+    fn collect_rw_set_with_index(&self) -> Vec<RWSetWithTxnIndex> {
+        let mut rw_set_with_index_vec = vec![RWSetWithTxnIndex::default(); self.message_txs.len()];
+        for (i, msg_rx) in self.message_rxs.iter().enumerate() {
+            if i == self.shard_id {
+                continue;
+            }
+            let msg = msg_rx.recv().unwrap();
+            match msg {
+                CrossShardMsg::RWSetWithTxnIndexMsg(rw_set_with_index) => {
+                    rw_set_with_index_vec[i] = rw_set_with_index;
+                },
+                _ => panic!("Unexpected message"),
+            }
+        }
+        rw_set_with_index_vec
+    }
+
+    fn broadcast_num_accepted_txns(&self, num_accepted_txns: usize) {
+        let num_shards = self.message_txs.len();
+        for i in 0..num_shards {
+            if i != self.shard_id {
+                self.message_txs[i]
+                    .send(CrossShardMsg::AcceptedTxnsMsg(num_accepted_txns))
+                    .unwrap();
+            }
+        }
+    }
+
+    fn collect_num_accepted_txns(&self) -> Vec<usize> {
+        let mut accepted_txns_vec = vec![0; self.message_txs.len()];
+        for (i, msg_rx) in self.message_rxs.iter().enumerate() {
+            if i == self.shard_id {
+                continue;
+            }
+            let msg = msg_rx.recv().unwrap();
+            match msg {
+                CrossShardMsg::AcceptedTxnsMsg(num_accepted_txns) => {
+                    accepted_txns_vec[i] = num_accepted_txns;
+                },
+                _ => panic!("Unexpected message"),
+            }
+        }
+        accepted_txns_vec
+    }
+
+    fn filter_txns_with_cross_shard_deps(&self, partition_msg: FilterTxnsWithCrossShardDep) {
+        let FilterTxnsWithCrossShardDep {
             transactions,
-            index_offset,
+            prev_rounds_rw_set_with_index,
+            prev_rounds_frozen_chunks,
         } = partition_msg;
-        let mut now = std::time::Instant::now();
-        let num_shards = self.messages_txs.len();
-
-        let mut conflict_detector = CrossShardConflictDetector::new(self.shard_id, num_shards, &transactions);
-        self.broadcast_dependency_analysis(&conflict_detector);
-        let dependency_analysis_msgs = self.collect_cross_shard_dependency_analysis();
-        let discarded_sender_msg = conflict_detector
-            .discard_conflicting_transactions(&transactions, &dependency_analysis_msgs);
-        self.broadcast_discarded_senders_msg(&discarded_sender_msg);
-        println!("Time taken for conflict detection: {:?} for shard_id {:?}", now.elapsed(), self.shard_id);
-        now = std::time::Instant::now();
-        let discarded_senders_msgs = self.collect_cross_shard_discarded_senders();
-
-        let partitioning_status = conflict_detector
-            .discard_discarded_sender_transactions(&transactions, &discarded_senders_msgs);
-        println!("Time taken for discarding discarded sender: {:?} for shard_id {:?}", now.elapsed(), self.shard_id);
-
-        now = std::time::Instant::now();
-        // split the transaction into accepted and discarded statuses
-        let mut accepted_txns: Vec<(usize, AnalyzedTransaction)> = Vec::new();
-        let mut rejected_txns: Vec<(usize, AnalyzedTransaction)> = Vec::new();
-        for (i, txn) in transactions.into_iter().enumerate() {
-            if partitioning_status[i] == PartitioningStatus::Accepted {
-                accepted_txns.push((index_offset + i, txn));
-            } else {
-                rejected_txns.push((index_offset + i, txn));
-            }
+        let num_shards = self.message_txs.len();
+        let mut conflict_detector = CrossShardConflictDetector::new(self.shard_id, num_shards);
+        // If transaction filtering is allowed, we need to prepare the dependency analysis and broadcast it to other shards
+        // Based on the dependency analysis received from other shards, we will reject transactions that are conflicting with
+        // transactions in other shards
+        let read_write_set = RWSet::new(&transactions);
+        self.broadcast_rw_set(read_write_set);
+        let cross_shard_rw_set = self.collect_rw_set();
+        let (accepted_txns, accepted_cross_shard_dependencies, rejected_txns) = conflict_detector
+            .filter_txns(
+                transactions,
+                &cross_shard_rw_set,
+                prev_rounds_rw_set_with_index,
+            );
+        // Broadcast and collect the stats around number of accepted and rejected transactions from other shards
+        // this will be used to determine the absolute index of accepted transactions in this shard.
+        self.broadcast_num_accepted_txns(accepted_txns.len());
+        let accepted_txns_vec = self.collect_num_accepted_txns();
+        // Calculate the absolute index of accepted transactions in this shard, which is the sum of all accepted transactions
+        // from other shards whose shard id is smaller than the current shard id and the number of accepted transactions in the
+        // previous rounds
+        let mut index_offset = prev_rounds_frozen_chunks
+            .iter()
+            .map(|chunk| chunk.len())
+            .sum::<usize>();
+        for num_accepted_txns in accepted_txns_vec.iter().take(self.shard_id) {
+            index_offset += num_accepted_txns;
         }
-        println!("Time taken for splitting transactions: {:?} for shard_id {:?}", now.elapsed(), self.shard_id);
 
+        // Calculate the RWSetWithTxnIndex for the accepted transactions
+        let current_rw_set_with_index = RWSetWithTxnIndex::new(&accepted_txns, index_offset);
+
+        let accepted_txns_with_dependencies = accepted_txns
+            .into_iter()
+            .zip(accepted_cross_shard_dependencies.into_iter())
+            .map(|(txn, dependencies)| TransactionWithDependencies::new(txn, dependencies))
+            .collect::<Vec<TransactionWithDependencies>>();
+
+        let frozen_chunk = TransactionChunk::new(index_offset, accepted_txns_with_dependencies);
         // send the result back to the controller
         self.result_tx
-            .send(PartitionedBlockResponse::new(accepted_txns, rejected_txns))
+            .send(PartitioningBlockResponse::new(
+                frozen_chunk,
+                current_rw_set_with_index,
+                rejected_txns,
+            ))
+            .unwrap();
+    }
+
+    fn add_txns_with_cross_shard_deps(&self, partition_msg: AddTxnsWithCrossShardDep) {
+        let AddTxnsWithCrossShardDep {
+            transactions,
+            index_offset,
+            prev_rounds_frozen_chunks,
+            // The frozen dependencies in previous chunks.
+            prev_rounds_rw_set_with_index,
+        } = partition_msg;
+        let num_shards = self.message_txs.len();
+        let conflict_detector = CrossShardConflictDetector::new(self.shard_id, num_shards);
+
+        // Since txn filtering is not allowed, we can create the RW set with maximum txn
+        // index with the index offset passed.
+        let rw_set_with_index_for_shard = RWSetWithTxnIndex::new(&transactions, index_offset);
+
+        self.broadcast_rw_set_with_index(rw_set_with_index_for_shard.clone());
+        let current_round_rw_set_with_index = self.collect_rw_set_with_index();
+        let frozen_chunk = conflict_detector.get_frozen_chunk(
+            transactions,
+            Arc::new(current_round_rw_set_with_index),
+            prev_rounds_rw_set_with_index,
+            index_offset,
+        );
+
+        drop(prev_rounds_frozen_chunks);
+
+        self.result_tx
+            .send(PartitioningBlockResponse::new(
+                frozen_chunk,
+                rw_set_with_index_for_shard,
+                vec![],
+            ))
             .unwrap();
     }
 
@@ -147,8 +223,11 @@ impl PartitioningShard {
         loop {
             let command = self.control_rx.recv().unwrap();
             match command {
-                ControlMsg::PartitionBlock(msg) => {
-                    self.partition_block(msg);
+                ControlMsg::FilterCrossShardDepReq(msg) => {
+                    self.filter_txns_with_cross_shard_deps(msg);
+                },
+                ControlMsg::AddCrossShardDepReq(msg) => {
+                    self.add_txns_with_cross_shard_deps(msg);
                 },
                 ControlMsg::Stop => {
                     break;

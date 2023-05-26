@@ -8,34 +8,32 @@ use crate::{
     transaction::{SignedTransaction, Transaction, TransactionPayload},
 };
 use aptos_crypto::{
-    hash::{DummyHasher},
+    hash::{CryptoHash, DummyHasher},
+    HashValue,
 };
-use aptos_crypto::{hash::CryptoHash, HashValue};
 pub use move_core_types::abi::{
     ArgumentABI, ScriptFunctionABI as EntryFunctionABI, TransactionScriptABI, TypeArgumentABI,
 };
 use move_core_types::{
     account_address::AccountAddress, language_storage::StructTag, move_resource::MoveStructType,
 };
-use aptos_crypto_derive::CryptoHasher;
 use std::hash::{Hash, Hasher};
-
 
 #[derive(Clone, Debug)]
 pub struct AnalyzedTransaction {
     transaction: Transaction,
-    /// Set of storage locations that are read by the transaction. This can be accurate or strictly
-    /// overestimated.
-    read_hints: Vec<StorageLocation>,
+    /// Set of storage locations that are read by the transaction - this doesn't include location
+    /// that are written by the transactions to avoid duplication of locations across read and write sets
+    /// This can be accurate or strictly overestimated.
+    read_set: Vec<StorageLocation>,
     /// Set of storage locations that are written by the transaction. This can be accurate or strictly
     /// overestimated.
-    write_hints: Vec<StorageLocation>,
+    write_set: Vec<StorageLocation>,
     /// A transaction is predictable if neither the read_hint or the write_hint have wildcards.
     predictable_transaction: bool,
     /// The hash of the transaction - this is cached for performance reasons.
     hash: HashValue,
 }
-
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum StorageLocation {
@@ -62,18 +60,18 @@ impl CryptoHash for StorageLocation {
 impl AnalyzedTransaction {
     pub fn new(
         transaction: Transaction,
-        read_hints: Vec<StorageLocation>,
-        write_hints: Vec<StorageLocation>,
+        read_set: Vec<StorageLocation>,
+        write_set: Vec<StorageLocation>,
     ) -> Self {
-        let hints_contain_wildcard = read_hints
+        let hints_contain_wildcard = read_set
             .iter()
-            .chain(write_hints.iter())
+            .chain(write_set.iter())
             .any(|hint| !matches!(hint, StorageLocation::Specific(_)));
         let hash = transaction.hash();
         AnalyzedTransaction {
             transaction,
-            read_hints,
-            write_hints,
+            read_set,
+            write_set,
             predictable_transaction: !hints_contain_wildcard,
             hash,
         }
@@ -87,19 +85,19 @@ impl AnalyzedTransaction {
         &self.transaction
     }
 
-    pub fn read_hints(&self) -> &[StorageLocation] {
-        &self.read_hints
+    pub fn read_set(&self) -> &[StorageLocation] {
+        &self.read_set
     }
 
-    pub fn write_hints(&self) -> &[StorageLocation] {
-        &self.write_hints
+    pub fn write_set(&self) -> &[StorageLocation] {
+        &self.write_set
     }
 
     pub fn predictable_transaction(&self) -> bool {
         self.predictable_transaction
     }
 
-    pub fn get_sender(&self) -> Option<AccountAddress> {
+    pub fn sender(&self) -> Option<AccountAddress> {
         match &self.transaction {
             Transaction::UserTransaction(signed_txn) => Some(signed_txn.sender()),
             _ => None,
@@ -129,7 +127,7 @@ impl AnalyzedTransaction {
             receiver_address,
             CoinStoreResource::struct_tag().access_vector(),
         ));
-        let mut read_hints = vec![
+        let mut write_set = vec![
             StorageLocation::Specific(sender_coin_store_key),
             StorageLocation::Specific(receiver_coin_store_key),
             StorageLocation::Specific(sender_account_resource_key),
@@ -137,13 +135,13 @@ impl AnalyzedTransaction {
         if !receiver_exists {
             // If the receiver doesn't exist, we create the receiver account, so we need to read the
             // receiver account resource.
-            read_hints.push(StorageLocation::Specific(receiver_account_resource_key));
+            write_set.push(StorageLocation::Specific(receiver_account_resource_key));
         }
         AnalyzedTransaction::new(
             Transaction::UserTransaction(signed_txn),
-            read_hints.clone(),
+            vec![],
             // read and write locations are same for coin transfer
-            read_hints,
+            write_set,
         )
     }
 
@@ -176,7 +174,7 @@ impl AnalyzedTransaction {
         ];
         AnalyzedTransaction::new(
             Transaction::UserTransaction(signed_txn),
-            read_hints.clone(),
+            vec![],
             // read and write locations are same for create account
             read_hints,
         )

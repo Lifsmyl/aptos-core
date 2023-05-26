@@ -1,91 +1,87 @@
 // Copyright © Aptos Foundation
 
-use aptos_types::transaction::analyzed_transaction::{AnalyzedTransaction, StorageLocation};
-use move_core_types::account_address::AccountAddress;
-use std::{collections::HashSet, sync::Arc};
+use crate::sharded_block_partitioner::{
+    dependency_analyzer::{RWSet, RWSetWithTxnIndex},
+    TransactionChunk, TxnIndex,
+};
+use aptos_types::transaction::analyzed_transaction::AnalyzedTransaction;
+use std::sync::Arc;
 
 pub enum ControlMsg {
-    PartitionBlock(PartitionBlockMsg),
+    FilterCrossShardDepReq(FilterTxnsWithCrossShardDep),
+    AddCrossShardDepReq(AddTxnsWithCrossShardDep),
     Stop,
 }
 
 #[derive(Clone, Debug)]
 pub enum CrossShardMsg {
-    DependencyAnalysis(DependencyAnalysisMsg),
-    DiscardedSenders(DiscardedSendersMsg),
+    RWSetWithTxnIndexMsg(RWSetWithTxnIndex),
+    RWSetMsg(RWSet),
+    // Number of accepted transactions in the shard for the current round.
+    AcceptedTxnsMsg(usize),
 }
 
-pub struct PartitionBlockMsg {
+pub struct FilterTxnsWithCrossShardDep {
     pub transactions: Vec<AnalyzedTransaction>,
-    pub index_offset: usize,
+    // The frozen dependencies in previous chunks.
+    pub prev_rounds_rw_set_with_index: Arc<Vec<RWSetWithTxnIndex>>,
+    pub prev_rounds_frozen_chunks: Arc<Vec<TransactionChunk>>,
 }
 
-impl PartitionBlockMsg {
-    pub fn new(transactions: Vec<AnalyzedTransaction>, index_offset: usize) -> Self {
+impl FilterTxnsWithCrossShardDep {
+    pub fn new(
+        transactions: Vec<AnalyzedTransaction>,
+        prev_rounds_rw_set_with_index: Arc<Vec<RWSetWithTxnIndex>>,
+        prev_rounds_frozen_chunks: Arc<Vec<TransactionChunk>>,
+    ) -> Self {
+        Self {
+            transactions,
+            prev_rounds_rw_set_with_index,
+            prev_rounds_frozen_chunks,
+        }
+    }
+}
+
+pub struct AddTxnsWithCrossShardDep {
+    pub transactions: Vec<AnalyzedTransaction>,
+    pub index_offset: TxnIndex,
+    pub prev_rounds_frozen_chunks: Arc<Vec<TransactionChunk>>,
+    // The frozen dependencies in previous chunks.
+    pub prev_rounds_rw_set_with_index: Arc<Vec<RWSetWithTxnIndex>>,
+}
+
+impl AddTxnsWithCrossShardDep {
+    pub fn new(
+        transactions: Vec<AnalyzedTransaction>,
+        index_offset: TxnIndex,
+        prev_rounds_frozen_chunks: Arc<Vec<TransactionChunk>>,
+        prev_rounds_rw_set_with_index: Arc<Vec<RWSetWithTxnIndex>>,
+    ) -> Self {
         Self {
             transactions,
             index_offset,
+            prev_rounds_rw_set_with_index,
+            prev_rounds_frozen_chunks,
         }
     }
 }
 
-pub struct PartitionedBlockResponse {
-    pub accepted_txns: Vec<(usize, AnalyzedTransaction)>,
-    pub rejected_txns: Vec<(usize, AnalyzedTransaction)>,
+pub struct PartitioningBlockResponse {
+    pub frozen_chunk: TransactionChunk,
+    pub rw_set_with_index: RWSetWithTxnIndex,
+    pub rejected_txns: Vec<AnalyzedTransaction>,
 }
 
-impl PartitionedBlockResponse {
+impl PartitioningBlockResponse {
     pub fn new(
-        accepted_txns: Vec<(usize, AnalyzedTransaction)>,
-        rejected_txns: Vec<(usize, AnalyzedTransaction)>,
+        frozen_chunk: TransactionChunk,
+        frozen_dependencies: RWSetWithTxnIndex,
+        rejected_txns: Vec<AnalyzedTransaction>,
     ) -> Self {
         Self {
-            accepted_txns,
+            frozen_chunk,
+            rw_set_with_index: frozen_dependencies,
             rejected_txns,
         }
     }
-}
-
-#[derive(Clone, Default, Debug)]
-pub struct DependencyAnalysisMsg {
-    pub source_shard_id: usize,
-    pub exclusive_read_set: Arc<HashSet<StorageLocation>>,
-    pub write_set: Arc<HashSet<StorageLocation>>,
-}
-
-impl DependencyAnalysisMsg {
-    pub fn new(
-        source_shard_id: usize,
-        exclusive_read_set: Arc<HashSet<StorageLocation>>,
-        write_set: Arc<HashSet<StorageLocation>>,
-    ) -> Self {
-        Self {
-            source_shard_id,
-            exclusive_read_set,
-            write_set,
-        }
-    }
-}
-
-#[derive(Clone, Default, Debug)]
-pub struct DiscardedSendersMsg {
-    pub source_shard_id: usize,
-    pub discarded_senders: Arc<HashSet<AccountAddress>>,
-}
-
-impl DiscardedSendersMsg {
-    pub fn new(source_shard_id: usize, discarded_senders: Arc<HashSet<AccountAddress>>) -> Self {
-        Self {
-            source_shard_id,
-            discarded_senders,
-        }
-    }
-}
-
-#[derive(PartialEq, Eq, Debug, Copy, Clone)]
-pub enum PartitioningStatus {
-    // Transaction is accepted after partitioning.
-    Accepted,
-    // Transaction is discarded due to creating cross-shard dependency.
-    Discarded,
 }

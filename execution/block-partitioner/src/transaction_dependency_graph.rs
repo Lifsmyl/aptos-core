@@ -116,7 +116,7 @@ impl<'a> DependencyGraph<'a> {
                     .or_insert_with(|| DashMap::with_shard_amount(128));
 
                 // Iterate through the write hints of the current transaction
-                for write_hint in analyzed_txn.write_hints() {
+                for write_hint in analyzed_txn.write_set() {
                     if let Some(transactions) = read_hint_index.get(write_hint) {
                         // Iterate through the transactions that read from the current write hint
                         for dependent_txn in transactions.value().iter() {
@@ -158,7 +158,7 @@ impl<'a> DependencyGraph<'a> {
             .enumerate()
             .for_each(|(index, txn)| {
                 txn_index.insert(txn, index);
-                let hints = txn.read_hints();
+                let hints = txn.read_set();
 
                 // Iterate through the hints
                 for hint in hints {

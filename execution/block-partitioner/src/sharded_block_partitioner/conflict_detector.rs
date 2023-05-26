@@ -1,96 +1,149 @@
 // Copyright © Aptos Foundation
 
-use crate::sharded_block_partitioner::messages::{
-    DependencyAnalysisMsg, DiscardedSendersMsg, PartitioningStatus,
+use crate::sharded_block_partitioner::{
+    dependency_analyzer::{RWSet, RWSetWithTxnIndex},
+    CrossShardDependencies, ShardId, TransactionChunk, TransactionWithDependencies, TxnIndex,
 };
+use aptos_crypto::hash::CryptoHash;
 use aptos_types::transaction::analyzed_transaction::AnalyzedTransaction;
-use std::{collections::HashSet, sync::Arc};
-use crate::sharded_block_partitioner::dependency_analyzer::DependencyAnalyzer;
+use std::sync::Arc;
 
 pub struct CrossShardConflictDetector {
-    shard_id: usize,
+    shard_id: ShardId,
     num_shards: usize,
-    // transaction partitioning status
-    partitioning_status: Vec<PartitioningStatus>,
-    dependency_analyzer: DependencyAnalyzer,
 }
 
 impl CrossShardConflictDetector {
-    pub fn new(shard_id: usize, num_shards: usize, txns: &[AnalyzedTransaction]) -> Self {
+    pub fn new(shard_id: ShardId, num_shards: usize) -> Self {
         Self {
             shard_id,
             num_shards,
-            partitioning_status: vec![PartitioningStatus::Accepted; txns.len()],
-            dependency_analyzer: DependencyAnalyzer::new(shard_id, num_shards, txns),
         }
     }
 
-    pub fn get_dependency_analysis_msg(&self) -> DependencyAnalysisMsg {
-        self.dependency_analyzer.get_dependency_analysis_msg()
-    }
-
-    pub fn discard_conflicting_transactions(
+    pub fn filter_txns(
         &mut self,
-        analyzed_transactions: &[AnalyzedTransaction],
-        cross_shard_dependencies: &[DependencyAnalysisMsg],
-    ) -> DiscardedSendersMsg {
+        txns: Vec<AnalyzedTransaction>,
+        cross_shard_rw_set: &[RWSet],
+        prev_rounds_rw_set_with_index: Arc<Vec<RWSetWithTxnIndex>>,
+    ) -> (
+        Vec<AnalyzedTransaction>,
+        Vec<CrossShardDependencies>,
+        Vec<AnalyzedTransaction>,
+    ) {
         // Iterate through all the transactions and if any shard has taken read/write lock on the storage location
-        // and has a smaller shard id than the current shard id, discard the transaction
-        let mut discarded_senders = HashSet::new();
-        for (index, txn) in analyzed_transactions.iter().enumerate() {
-            if self.check_for_write_conflict(self.shard_id, txn, cross_shard_dependencies) {
-                self.partitioning_status[index] = PartitioningStatus::Discarded;
-                if let Some(sender) = txn.get_sender() {
-                    discarded_senders.insert(sender);
-                }
-            }
-            if self.check_for_read_conflict(self.shard_id, txn, cross_shard_dependencies) {
-                self.partitioning_status[index] = PartitioningStatus::Discarded;
-                if let Some(sender) = txn.get_sender() {
-                    discarded_senders.insert(sender);
-                }
-                continue;
+        // and has a higher priority than this shard id, then this transaction needs to be moved to the end of the block.
+        let mut accepted_txns = Vec::new();
+        let mut accepted_txn_dependencies = Vec::new();
+        let mut rejected_txns = Vec::new();
+        for (_, txn) in txns.into_iter().enumerate() {
+            if self.check_for_cross_shard_conflict(self.shard_id, &txn, cross_shard_rw_set) {
+                rejected_txns.push(txn);
+            } else {
+                accepted_txn_dependencies.push(self.get_dependencies_for_frozen_txn(
+                    &txn,
+                    Arc::new(vec![]),
+                    prev_rounds_rw_set_with_index.clone(),
+                ));
+                accepted_txns.push(txn);
             }
         }
-        DiscardedSendersMsg::new(self.shard_id, Arc::new(discarded_senders))
+        (accepted_txns, accepted_txn_dependencies, rejected_txns)
     }
 
-    pub(crate) fn discard_discarded_sender_transactions(
-        &mut self,
-        analyzed_transactions: &[AnalyzedTransaction],
-        cross_shard_discarded_senders: &[DiscardedSendersMsg],
-    ) -> &[PartitioningStatus] {
-        // Iterate through all the transactions and if any shard has discarded the sender
-        // and has a smaller shard id than the current shard id, discard the transaction
-        for (i, txn) in analyzed_transactions.iter().enumerate() {
-            if let Some(sender) = txn.get_sender() {
-                for (shard_id, discarded_senders) in
-                    cross_shard_discarded_senders.iter().enumerate()
-                {
-                    // Ignore if this is from the same shard
-                    if shard_id == self.shard_id {
-                        // We only need to check if any shard id < current shard id has taken a write lock on the storage location
-                        break;
-                    }
-                    if discarded_senders.discarded_senders.contains(&sender) {
-                        self.partitioning_status[i] = PartitioningStatus::Discarded;
-                        break;
-                    }
+    fn get_dependencies_for_frozen_txn(
+        &self,
+        frozen_txn: &AnalyzedTransaction,
+        current_round_rw_set_with_index: Arc<Vec<RWSetWithTxnIndex>>,
+        prev_rounds_rw_set_with_index: Arc<Vec<RWSetWithTxnIndex>>,
+    ) -> CrossShardDependencies {
+        if current_round_rw_set_with_index.is_empty() && prev_rounds_rw_set_with_index.is_empty() {
+            return CrossShardDependencies::default();
+        }
+        // Iterate through the frozen dependencies and add the max transaction index for each storage location
+        let mut cross_shard_dependencies = CrossShardDependencies::default();
+        for read_location in frozen_txn.read_set().iter() {
+            // For current round, iterate through all shards less than current shards in the reverse order and for previous rounds iterate through all shards in the reverse order
+            // and find the first shard id that has taken a write lock on the storage location. This ensures that we find the highest txn index that is conflicting
+            // with the current transaction.
+            for rw_set_with_index in current_round_rw_set_with_index
+                .iter()
+                .take(self.shard_id)
+                .chain(prev_rounds_rw_set_with_index.iter())
+            {
+                if rw_set_with_index.has_write_lock(read_location) {
+                    cross_shard_dependencies.add_depends_on_txn(
+                        rw_set_with_index.get_write_lock_txn_index(read_location),
+                    );
+                    break;
                 }
             }
         }
-        &self.partitioning_status
+
+        for write_location in frozen_txn.write_set().iter() {
+            for rw_set_with_index in current_round_rw_set_with_index
+                .iter()
+                .take(self.shard_id)
+                .chain(prev_rounds_rw_set_with_index.iter())
+            {
+                if rw_set_with_index.has_read_or_write_lock(write_location) {
+                    cross_shard_dependencies.add_depends_on_txn(
+                        rw_set_with_index.get_write_lock_txn_index(write_location),
+                    );
+                    break;
+                }
+            }
+        }
+
+        cross_shard_dependencies
+    }
+
+    pub fn get_frozen_chunk(
+        &self,
+        txns: Vec<AnalyzedTransaction>,
+        current_round_rw_set_with_index: Arc<Vec<RWSetWithTxnIndex>>,
+        prev_round_rw_set_with_index: Arc<Vec<RWSetWithTxnIndex>>,
+        index_offset: TxnIndex,
+    ) -> TransactionChunk {
+        let mut frozen_txns = Vec::new();
+        for txn in txns.into_iter() {
+            let dependency = self.get_dependencies_for_frozen_txn(
+                &txn,
+                current_round_rw_set_with_index.clone(),
+                prev_round_rw_set_with_index.clone(),
+            );
+            frozen_txns.push(TransactionWithDependencies::new(txn, dependency));
+        }
+        TransactionChunk::new(index_offset, frozen_txns)
+    }
+
+    fn check_for_cross_shard_conflict(
+        &self,
+        current_shard_id: ShardId,
+        txn: &AnalyzedTransaction,
+        cross_shard_rw_set: &[RWSet],
+    ) -> bool {
+        if self.check_for_read_conflict(current_shard_id, txn, cross_shard_rw_set) {
+            return true;
+        }
+        if self.check_for_write_conflict(current_shard_id, txn, cross_shard_rw_set) {
+            return true;
+        }
+        false
     }
 
     fn check_for_read_conflict(
         &self,
-        current_shard_id: usize,
+        current_shard_id: ShardId,
         txn: &AnalyzedTransaction,
-        cross_shard_dependencies: &[DependencyAnalysisMsg],
+        cross_shard_rw_set: &[RWSet],
     ) -> bool {
-        // For conflict resolution, we start from the mid_index and check if any shard has taken a lock on the storage location
-        for read_location in txn.read_hints().iter() {
-            let anchor_shard_id = self.dependency_analyzer.get_anchor_shard_id(read_location).unwrap();
+        for read_location in txn.read_set().iter() {
+            // Each storage location is allocated an anchor shard id, which is used to conflict resolution deterministically across shards.
+            // During conflict resolution, shards starts scanning from the anchor shard id and
+            // first shard id that has taken a read/write lock on this storage location is the owner of this storage location.
+            // Please note another alternative is scan from first shard id, but this will result in non-uniform load across shards in case of conflicts.
+            let anchor_shard_id = read_location.hash().byte(0) as usize % self.num_shards;
             for offset in 0..self.num_shards {
                 let shard_id = (anchor_shard_id + offset) % self.num_shards;
                 // Ignore if this is from the same shard
@@ -98,7 +151,7 @@ impl CrossShardConflictDetector {
                     // We only need to check if any shard id < current shard id has taken a write lock on the storage location
                     break;
                 }
-                if cross_shard_dependencies[shard_id].write_set.contains(read_location) {
+                if cross_shard_rw_set[shard_id].has_write_lock(read_location) {
                     return true;
                 }
             }
@@ -110,10 +163,10 @@ impl CrossShardConflictDetector {
         &self,
         current_shard_id: usize,
         txn: &AnalyzedTransaction,
-        cross_shard_dependencies: &[DependencyAnalysisMsg],
+        cross_shard_rw_set: &[RWSet],
     ) -> bool {
-        for write_location in txn.write_hints().iter() {
-            let anchor_shard_id = self.dependency_analyzer.get_anchor_shard_id(write_location).unwrap();
+        for write_location in txn.write_set().iter() {
+            let anchor_shard_id = write_location.hash().byte(0) as usize % self.num_shards;
             for offset in 0..self.num_shards {
                 let shard_id = (anchor_shard_id + offset) % self.num_shards;
                 // Ignore if this is from the same shard
@@ -121,10 +174,7 @@ impl CrossShardConflictDetector {
                     // We only need to check if any shard id < current shard id has taken a write lock on the storage location
                     break;
                 }
-                if cross_shard_dependencies[shard_id].exclusive_read_set.contains(write_location) {
-                    return true;
-                }
-                if cross_shard_dependencies[shard_id].write_set.contains(write_location) {
+                if cross_shard_rw_set[shard_id].has_read_or_write_lock(write_location) {
                     return true;
                 }
             }

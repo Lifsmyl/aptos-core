@@ -8,8 +8,10 @@ use aptos_types::transaction::analyzed_transaction::AnalyzedTransaction;
 use clap::Parser;
 use rand::{rngs::OsRng, Rng};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use std::{sync::Mutex, time::Instant};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    sync::Mutex,
+    time::{Instant, SystemTime, UNIX_EPOCH},
+};
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -37,7 +39,7 @@ fn main() {
         .collect();
     println!("Created {} accounts", num_accounts);
     println!("Creating {} transactions", args.block_size);
-    let transactions: Box<Vec<AnalyzedTransaction>> = Box::new((0..args.block_size)
+    let transactions: Vec<AnalyzedTransaction> = (0..args.block_size)
         .into_iter()
         .map(|_| {
             // randomly select a sender and receiver from accounts
@@ -48,28 +50,27 @@ fn main() {
             let mut sender = accounts[sender_index].lock().unwrap();
             create_signed_p2p_transaction(&mut sender, vec![&receiver]).remove(0)
         })
-        .collect());
+        .collect();
 
     // profile the time taken
     let partitioner = ShardedBlockPartitioner::new(args.num_shards);
     for _ in 0..args.num_blocks {
-        let now = Instant::now();
+        let transactions = transactions.clone();
         println!("Starting to partition");
         let current_time = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .expect("Failed to retrieve current time").as_millis();
+            .expect("Failed to retrieve current time")
+            .as_millis();
         // print current time
         println!("Current time: {:?}", current_time);
-        let (accepted_txns, _) = partitioner.partition(transactions.clone());
+        let now = Instant::now();
+        partitioner.partition(transactions);
+        let elapsed = now.elapsed();
         let current_time = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .expect("Failed to retrieve current time").as_millis();
+            .expect("Failed to retrieve current time")
+            .as_millis();
         println!("partition end time from main {:?}", current_time);
-        let elapsed = now.elapsed();
         println!("Time taken to partition: {:?}", elapsed);
-        println!(
-            "Number of accepted transactions: {}",
-            accepted_txns.iter().map(|x| x.1.len()).sum::<usize>()
-        );
     }
 }
