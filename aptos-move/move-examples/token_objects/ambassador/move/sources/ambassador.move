@@ -96,7 +96,7 @@ module token_objects::ambassador {
         let uri = string::utf8(COLLECTION_URI);
 
         // Creates the collection with unlimited supply and without establishing any royalty configuration.
-        collection::create_unlimited_collection(
+        collection::create_untracked_collection(
             creator,
             description,
             name,
@@ -128,7 +128,7 @@ module token_objects::ambassador {
         let collection = string::utf8(COLLECTION_NAME);
         // Creates the ambassador token, and get the constructor ref of the token. The constructor ref
         // is used to generate the refs of the token.
-        let constructor_ref = token::create_named_token(
+        let constructor_ref = token::create_from_account(
             creator,
             collection,
             description,
