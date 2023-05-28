@@ -1,4 +1,5 @@
 // Copyright © Aptos Foundation
+// Parts of the project are originally copyright © Meta Platforms, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::sharded_block_executor::executor_shard::ExecutorShard;
@@ -19,6 +20,7 @@ use std::{
 };
 
 mod executor_shard;
+
 /// A wrapper around sharded block executors that manages multiple shards and aggregates the results.
 pub struct ShardedBlockExecutor<S: StateView + Sync + Send + 'static> {
     num_executor_shards: usize,
@@ -29,34 +31,8 @@ pub struct ShardedBlockExecutor<S: StateView + Sync + Send + 'static> {
     phantom: PhantomData<S>,
 }
 
-pub struct ExecuteBlockCommand<S: StateView + Sync + Send + 'static> {
-    state_view: Arc<S>,
-    accepted_transactions: Vec<Transaction>,
-    accepted_transaction_indices: Vec<usize>,
-    rejected_transaction_indices: Vec<usize>,
-    concurrency_level_per_shard: usize,
-}
-
-impl<S: StateView + Sync + Send + 'static> ExecuteBlockCommand<S> {
-    pub fn new(
-        state_view: Arc<S>,
-        accepted_transactions: Vec<Transaction>,
-        accepted_transaction_indices: Vec<usize>,
-        rejected_transaction_indices: Vec<usize>,
-        concurrency_level_per_shard: usize,
-    ) -> Self {
-        Self {
-            state_view,
-            accepted_transactions,
-            accepted_transaction_indices,
-            rejected_transaction_indices,
-            concurrency_level_per_shard,
-        }
-    }
-}
-
 pub enum ExecutorShardCommand<S: StateView + Sync + Send + 'static> {
-    ExecuteBlock(ExecuteBlockCommand<S>),
+    ExecuteBlock(Arc<S>, Vec<Transaction>, usize),
     Stop,
 }
 
@@ -109,31 +85,20 @@ impl<S: StateView + Sync + Send + 'static> ShardedBlockExecutor<S> {
         block: Vec<AnalyzedTransaction>,
         concurrency_level_per_shard: usize,
     ) -> Result<Vec<TransactionOutput>, VMStatus> {
-        let block_size = block.len();
-        let (shard_to_accepted_txns, mut shard_to_rejected_txns) =
-            self.partitioner.partition(block, self.num_executor_shards);
-        let num_partitions = shard_to_accepted_txns.len();
-        for (shard_index, accepted_txns) in shard_to_accepted_txns.into_iter() {
-            let (accepted_txn_indices, accepted_txns) = accepted_txns
-                .into_iter()
-                .map(|(i, t)| (i, t.into_inner()))
-                .unzip();
-
-            let (rejected_txn_indices, _): (Vec<usize>, Vec<AnalyzedTransaction>) =
-                shard_to_rejected_txns
-                    .remove(&shard_index)
-                    .unwrap()
-                    .into_iter()
-                    .unzip();
-            let execute_block_command = ExecuteBlockCommand::new(
-                state_view.clone(),
-                accepted_txns,
-                accepted_txn_indices,
-                rejected_txn_indices,
-                concurrency_level_per_shard,
-            );
-            self.command_txs[shard_index]
-                .send(ExecutorShardCommand::ExecuteBlock(execute_block_command))
+        let block_partitions = self.partitioner.partition(block, self.num_executor_shards);
+        // Number of partitions might be smaller than the number of executor shards in case of
+        // block size is smaller than number of executor shards.
+        let num_partitions = block_partitions.len();
+        for (i, transactions) in block_partitions.into_iter().enumerate() {
+            self.command_txs[i]
+                .send(ExecutorShardCommand::ExecuteBlock(
+                    state_view.clone(),
+                    transactions
+                        .into_iter()
+                        .map(|t| t.into())
+                        .collect::<Vec<Transaction>>(),
+                    concurrency_level_per_shard,
+                ))
                 .unwrap();
         }
         // wait for all remote executors to send the result back and append them in order by shard id
@@ -143,12 +108,6 @@ impl<S: StateView + Sync + Send + 'static> ShardedBlockExecutor<S> {
             let result = self.result_rxs[i].recv().unwrap();
             aggregated_results.extend(result?);
         }
-        assert!(
-            aggregated_results.len() == block_size,
-            "ShardedBlockExecutor: expected {} outputs but got {}",
-            block_size,
-            aggregated_results.len()
-        );
         Ok(aggregated_results)
     }
 }

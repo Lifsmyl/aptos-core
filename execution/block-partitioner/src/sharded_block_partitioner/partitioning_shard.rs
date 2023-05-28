@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright © Aptos Foundation
 // SPDX-License-Identifier: Apache-2.0
-use crate::sharded_block_partitioner::{
-    conflict_detector::CrossShardConflictDetector,
-    dependency_analysis::{RWSet, RWSetWithTxnIndex},
-    messages::{
-        AddTxnsWithCrossShardDep, ControlMsg, CrossShardMsg, DiscardTxnsWithCrossShardDep,
-        PartitioningBlockResponse,
+use crate::{
+    sharded_block_partitioner::{
+        conflict_detector::CrossShardConflictDetector,
+        dependency_analysis::{RWSet, RWSetWithTxnIndex},
+        messages::{
+            AddTxnsWithCrossShardDep, ControlMsg, CrossShardMsg, DiscardTxnsWithCrossShardDep,
+            PartitioningBlockResponse,
+        },
     },
     types::{ShardId, TransactionWithDependencies, TransactionsChunk},
 };

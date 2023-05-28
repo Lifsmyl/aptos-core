@@ -1,7 +1,7 @@
 // Copyright © Aptos Foundation
 
-use crate::sharded_block_partitioner::{
-    dependency_analysis::{RWSet, RWSetWithTxnIndex},
+use crate::{
+    sharded_block_partitioner::dependency_analysis::{RWSet, RWSetWithTxnIndex},
     types::{TransactionsChunk, TxnIndex},
 };
 use aptos_types::transaction::analyzed_transaction::AnalyzedTransaction;

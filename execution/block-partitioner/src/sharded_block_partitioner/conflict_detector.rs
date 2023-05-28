@@ -1,7 +1,7 @@
 // Copyright © Aptos Foundation
 
-use crate::sharded_block_partitioner::{
-    dependency_analysis::{RWSet, RWSetWithTxnIndex},
+use crate::{
+    sharded_block_partitioner::dependency_analysis::{RWSet, RWSetWithTxnIndex},
     types::{
         CrossShardDependencies, ShardId, TransactionWithDependencies, TransactionsChunk, TxnIndex,
     },
@@ -94,7 +94,13 @@ impl CrossShardConflictDetector {
                 .take(self.shard_id)
                 .chain(prev_rounds_rw_set_with_index.iter())
             {
-                if rw_set_with_index.has_read_or_write_lock(write_location) {
+                if rw_set_with_index.has_read_lock(write_location) {
+                    cross_shard_dependencies.add_depends_on_txn(
+                        rw_set_with_index.get_read_lock_txn_index(write_location),
+                    );
+                    break;
+                }
+                if rw_set_with_index.has_write_lock(write_location) {
                     cross_shard_dependencies.add_depends_on_txn(
                         rw_set_with_index.get_write_lock_txn_index(write_location),
                     );

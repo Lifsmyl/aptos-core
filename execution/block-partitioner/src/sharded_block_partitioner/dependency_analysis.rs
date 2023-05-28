@@ -1,6 +1,6 @@
 // Copyright © Aptos Foundation
 
-use crate::sharded_block_partitioner::types::TxnIndex;
+use crate::types::TxnIndex;
 use aptos_types::transaction::analyzed_transaction::{AnalyzedTransaction, StorageLocation};
 use std::{
     collections::{HashMap, HashSet},
@@ -91,10 +91,6 @@ impl RWSetWithTxnIndex {
 
     pub fn has_read_lock(&self, location: &StorageLocation) -> bool {
         self.read_set.contains_key(location)
-    }
-
-    pub fn has_read_or_write_lock(&self, location: &StorageLocation) -> bool {
-        self.has_read_lock(location) || self.has_write_lock(location)
     }
 
     pub fn get_write_lock_txn_index(&self, location: &StorageLocation) -> TxnIndex {
