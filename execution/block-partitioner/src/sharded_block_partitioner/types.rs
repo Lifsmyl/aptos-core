@@ -8,6 +8,12 @@ pub type ShardId = usize;
 pub type TxnIndex = usize;
 
 #[derive(Default, Debug, Clone)]
+/// Represents the dependencies of a transaction on other transactions across shards. Two types
+/// of dependencies are supported:
+/// 1. `depends_on`: The transaction depends on the execution of the transactions in the set. In this
+/// case, the transaction can only be executed after the transactions in the set have been executed.
+/// 2. `dependents`: The transactions in the set depend on the execution of the transaction. In this
+/// case, the transactions in the set can only be executed after the transaction has been executed.
 pub struct CrossShardDependencies {
     depends_on: HashSet<TxnIndex>,
     // TODO (skedia) add support for this.
@@ -34,6 +40,22 @@ impl CrossShardDependencies {
 
 #[derive(Debug, Clone)]
 /// A contiguous chunk of transactions (along with their dependencies) in a block.
+///
+/// Each `TransactionsChunk` represents a sequential section of transactions within a block.
+/// The chunk includes the index of the first transaction relative to the block and a vector
+/// of `TransactionWithDependencies` representing the transactions included in the chunk.
+///
+/// Illustration:
+/// ```plaintext
+///  Block (Split into 3 transactions chunks):
+///  +----------------+------------------+------------------+
+///  | Chunk 1        | Chunk 2          | Chunk 3          |
+///  +----------------+------------------+------------------+
+///  | Transaction 1  | Transaction 4    | Transaction 7    |
+///  | Transaction 2  | Transaction 5    | Transaction 8    |
+///  | Transaction 3  | Transaction 6    | Transaction 9    |
+///  +----------------+------------------+------------------+
+/// ```
 pub struct TransactionsChunk {
     // This is the index of first transaction relative to the block.
     pub start_index: TxnIndex,

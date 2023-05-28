@@ -1,7 +1,7 @@
 // Copyright © Aptos Foundation
 
 use crate::sharded_block_partitioner::{
-    dependency_analyzer::{RWSet, RWSetWithTxnIndex},
+    dependency_analysis::{RWSet, RWSetWithTxnIndex},
     types::{
         CrossShardDependencies, ShardId, TransactionWithDependencies, TransactionsChunk, TxnIndex,
     },
@@ -23,7 +23,7 @@ impl CrossShardConflictDetector {
         }
     }
 
-    pub fn filter_txns(
+    pub fn discard_txns_with_cross_shard_deps(
         &mut self,
         txns: Vec<AnalyzedTransaction>,
         cross_shard_rw_set: &[RWSet],
@@ -53,6 +53,12 @@ impl CrossShardConflictDetector {
         (accepted_txns, accepted_txn_dependencies, rejected_txns)
     }
 
+    /// Adds a cross shard dependency for a transaction. This can be done by finding the maximum transaction index
+    /// that has taken a read/write lock on the storage location the current transaction is trying to read/write.
+    /// We traverse the current round read/write set in reverse order starting from shard id -1 and look for the first
+    /// txn index that has taken a read/write lock on the storage location. If we can't find any such txn index, we
+    /// traverse the previous rounds read/write set in reverse order and look for the first txn index that has taken
+    /// a read/write lock on the storage location.
     fn get_dependencies_for_frozen_txn(
         &self,
         frozen_txn: &AnalyzedTransaction,

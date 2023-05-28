@@ -4,9 +4,9 @@
 // SPDX-License-Identifier: Apache-2.0
 use crate::sharded_block_partitioner::{
     conflict_detector::CrossShardConflictDetector,
-    dependency_analyzer::{RWSet, RWSetWithTxnIndex},
+    dependency_analysis::{RWSet, RWSetWithTxnIndex},
     messages::{
-        AddTxnsWithCrossShardDep, ControlMsg, CrossShardMsg, FilterTxnsWithCrossShardDep,
+        AddTxnsWithCrossShardDep, ControlMsg, CrossShardMsg, DiscardTxnsWithCrossShardDep,
         PartitioningBlockResponse,
     },
     types::{ShardId, TransactionWithDependencies, TransactionsChunk},
@@ -17,8 +17,6 @@ use std::sync::{
     Arc,
 };
 
-/// A remote block executor that receives transactions from a channel and executes them in parallel.
-/// Currently it runs in the local machine and it will be further extended to run in a remote machine.
 pub struct PartitioningShard {
     shard_id: ShardId,
     control_rx: Receiver<ControlMsg>,
@@ -131,8 +129,8 @@ impl PartitioningShard {
         accepted_txns_vec
     }
 
-    fn filter_txns_with_cross_shard_deps(&self, partition_msg: FilterTxnsWithCrossShardDep) {
-        let FilterTxnsWithCrossShardDep {
+    fn discard_txns_with_cross_shard_deps(&self, partition_msg: DiscardTxnsWithCrossShardDep) {
+        let DiscardTxnsWithCrossShardDep {
             transactions,
             prev_rounds_rw_set_with_index,
             prev_rounds_frozen_chunks,
@@ -146,7 +144,7 @@ impl PartitioningShard {
         self.broadcast_rw_set(read_write_set);
         let cross_shard_rw_set = self.collect_rw_set();
         let (accepted_txns, accepted_cross_shard_dependencies, rejected_txns) = conflict_detector
-            .filter_txns(
+            .discard_txns_with_cross_shard_deps(
                 transactions,
                 &cross_shard_rw_set,
                 prev_rounds_rw_set_with_index,
@@ -226,8 +224,8 @@ impl PartitioningShard {
         loop {
             let command = self.control_rx.recv().unwrap();
             match command {
-                ControlMsg::FilterCrossShardDepReq(msg) => {
-                    self.filter_txns_with_cross_shard_deps(msg);
+                ControlMsg::DiscardCrossShardDepReq(msg) => {
+                    self.discard_txns_with_cross_shard_deps(msg);
                 },
                 ControlMsg::AddCrossShardDepReq(msg) => {
                     self.add_txns_with_cross_shard_deps(msg);

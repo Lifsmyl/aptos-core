@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::sharded_block_partitioner::{
-    dependency_analyzer::RWSetWithTxnIndex,
+    dependency_analysis::RWSetWithTxnIndex,
     messages::{
         AddTxnsWithCrossShardDep, ControlMsg,
-        ControlMsg::{AddCrossShardDepReq, FilterCrossShardDepReq},
-        CrossShardMsg, FilterTxnsWithCrossShardDep, PartitioningBlockResponse,
+        ControlMsg::{AddCrossShardDepReq, DiscardCrossShardDepReq},
+        CrossShardMsg, DiscardTxnsWithCrossShardDep, PartitioningBlockResponse,
     },
     partitioning_shard::PartitioningShard,
     types::TransactionsChunk,
 };
-use aptos_logger::error;
+use aptos_logger::{error, info};
 use aptos_types::transaction::analyzed_transaction::AnalyzedTransaction;
 use std::{
     collections::HashMap,
@@ -24,11 +24,41 @@ use std::{
 use types::ShardId;
 
 mod conflict_detector;
-pub mod dependency_analyzer;
+pub mod dependency_analysis;
 mod messages;
 mod partitioning_shard;
 pub mod types;
 
+/// A sharded block partitioner that partitions a block into multiple transaction chunks.
+/// On a high level, the partitioning process is as follows:
+/// ```plaintext
+/// 1. A block is partitioned into equally sized transaction chunks and sent to each shard.
+/// 2. Discard a bunch of transactions from the chunks and create new chunks so that
+///    there is no cross-shard dependency between transactions in a chunk.
+///   2.1 Following information is passed to each shard:
+///      - candidate transaction chunks to be partitioned
+///      - previously frozen transaction chunks (if any)
+///      - read-write set index mapping from previous iteration (if any) - this contains the maximum absolute index
+///        of the transaction that read/wrote to a storage location indexed by the storage location.
+///   2.1 Each shard creates a read-write set for all transactions in the chunk and broadcasts it to all other shards.
+///   2.2 Each shard collects read-write sets from all other shards and discards transactions that have cross-shard dependencies.
+///   2.3 Each shard broadcasts the number of transactions that it plans to put in the current chunk.
+///   2.4 Each shard collects the number of transactions that all other shards plan to put in the current chunk and based
+///      on that, it finalizes the absolute index offset of the current chunk. It uses this information to create a read-write set
+///      index, which is a mapping of all the storage location to the maximum absolute index of the transaction that read/wrote to that location.
+///   2.5 It also uses the read-write set index mapping passed in previous iteration to add cross-shard dependencies to the transactions. This is
+///     done by looking up the read-write set index for each storage location that a transaction reads/writes to and adding a cross-shard dependency
+///   2.6 Returns two lists of transactions: one list of transactions that are discarded and another list of transactions that are kept.
+/// 3. Use the discarded transactions to create new chunks and repeat the step 2 until N iterations.
+/// 4. For remaining transaction chunks, add cross-shard dependencies to the transactions. This is done as follows:
+///   4.1 Create a read-write set with index mapping for all the transactions in the remaining chunks.
+///   4.2 Broadcast and collect read-write set with index mapping from all shards.
+///   4.3 Add cross-shard dependencies to the transactions in the remaining chunks by looking up the read-write set index
+///       for each storage location that a transaction reads/writes to. The idea is to find the maximum transaction index
+///       that reads/writes to the same location and add that as a dependency. This can be done as follows: First look up the read-write set index
+///       mapping received from other shards in current iteration in descending order of shard id. If the read-write set index is not found,
+///       look up the read-write set index mapping received from other shards in previous iteration(s) in descending order of shard id.
+///
 pub struct ShardedBlockPartitioner {
     num_shards: usize,
     control_txs: Vec<Sender<ControlMsg>>,
@@ -38,11 +68,11 @@ pub struct ShardedBlockPartitioner {
 
 impl ShardedBlockPartitioner {
     pub fn new(num_shards: usize) -> Self {
-        println!(
+        info!(
             "Creating a new sharded block partitioner with {} shards",
             num_shards
         );
-        assert!(num_shards > 0, "num_executor_shards must be > 0");
+        assert!(num_shards > 0, "num_partitioning_shards must be > 0");
         // create channels for cross shard messages across all shards. This is a full mesh connection.
         // Each shard has a vector of channels for sending messages to other shards and
         // a vector of channels for receiving messages from other shards.
@@ -84,7 +114,7 @@ impl ShardedBlockPartitioner {
     // reorders the transactions so that transactions from the same sender always go to the same shard.
     // This places transactions from the same sender next to each other, which is not optimal for parallelism.
     // TODO(skedia): Improve this logic to shuffle senders
-    pub fn reorder_txns_by_senders(
+    fn reorder_txns_by_senders(
         &self,
         txns: Vec<AnalyzedTransaction>,
     ) -> Vec<Vec<AnalyzedTransaction>> {
@@ -154,7 +184,7 @@ impl ShardedBlockPartitioner {
         (frozen_chunks, frozen_rw_set_with_index, rejected_txns_vec)
     }
 
-    fn filter_cross_shard_dependencies(
+    fn discard_txns_with_cross_shard_dependencies(
         &self,
         txns_to_partition: Vec<Vec<AnalyzedTransaction>>,
         frozen_chunks: Arc<Vec<TransactionsChunk>>,
@@ -167,7 +197,7 @@ impl ShardedBlockPartitioner {
         let partition_block_msgs = txns_to_partition
             .into_iter()
             .map(|txns| {
-                FilterCrossShardDepReq(FilterTxnsWithCrossShardDep::new(
+                DiscardCrossShardDepReq(DiscardTxnsWithCrossShardDep::new(
                     txns,
                     frozen_rw_set_with_index.clone(),
                     frozen_chunks.clone(),
@@ -178,7 +208,7 @@ impl ShardedBlockPartitioner {
         self.collect_partition_block_response()
     }
 
-    fn add_cross_shard_dependencies_for_remaining(
+    fn add_cross_shard_dependencies(
         &self,
         index_offset: usize,
         remaining_txns_vec: Vec<Vec<AnalyzedTransaction>>,
@@ -208,9 +238,15 @@ impl ShardedBlockPartitioner {
         self.collect_partition_block_response()
     }
 
-    pub fn partition(&self, transactions: Vec<AnalyzedTransaction>) -> Vec<TransactionsChunk> {
+    /// We repeatedly partition chunks, discarding a bunch of transactions with cross-shard dependencies. The set of discarded
+    /// transactions are used as candidate chunks in the next round. This process is repeated until num_partitioning_rounds.
+    /// The remaining transactions are then added to the chunks with cross-shard dependencies.
+    pub fn partition(
+        &self,
+        transactions: Vec<AnalyzedTransaction>,
+        num_partitioning_round: usize,
+    ) -> Vec<TransactionsChunk> {
         let total_txns = transactions.len();
-        let num_rounds = 1;
         if total_txns == 0 {
             return vec![];
         }
@@ -220,12 +256,12 @@ impl ShardedBlockPartitioner {
         let mut frozen_rw_set_with_index = Arc::new(Vec::new());
         let mut frozen_chunks = Arc::new(Vec::new());
 
-        for _ in 0..num_rounds {
+        for _ in 0..num_partitioning_round {
             let (
                 current_frozen_chunks_vec,
                 current_frozen_rw_set_with_index_vec,
                 latest_txns_to_partition,
-            ) = self.filter_cross_shard_dependencies(
+            ) = self.discard_txns_with_cross_shard_dependencies(
                 txns_to_partition,
                 frozen_chunks.clone(),
                 frozen_rw_set_with_index.clone(),
@@ -248,10 +284,9 @@ impl ShardedBlockPartitioner {
             }
         }
 
-        // Second round, we don't filter transactions, we just add cross shard dependencies for
-        // remaining transactions.
+        // We just add cross shard dependencies for remaining transactions.
         let index_offset = frozen_chunks.iter().map(|chunk| chunk.len()).sum::<usize>();
-        let (remaining_frozen_chunks, _, _) = self.add_cross_shard_dependencies_for_remaining(
+        let (remaining_frozen_chunks, _, _) = self.add_cross_shard_dependencies(
             index_offset,
             txns_to_partition,
             frozen_chunks.clone(),
@@ -341,7 +376,7 @@ mod tests {
             receivers.iter().collect::<Vec<&TestAccount>>(),
         );
         let partitioner = ShardedBlockPartitioner::new(4);
-        let partitioned_txns = partitioner.partition(transactions.clone());
+        let partitioned_txns = partitioner.partition(transactions.clone(), 1);
         assert_eq!(partitioned_txns.len(), 4);
         // The first shard should contain all the transactions
         assert_eq!(partitioned_txns[0].len(), num_txns);
@@ -368,7 +403,7 @@ mod tests {
             transactions.push(create_non_conflicting_p2p_transaction())
         }
         let partitioner = ShardedBlockPartitioner::new(num_shards);
-        let partitioned_txns = partitioner.partition(transactions.clone());
+        let partitioned_txns = partitioner.partition(transactions.clone(), 1);
         assert_eq!(partitioned_txns.len(), num_shards);
         // Verify that the transactions are in the same order as the original transactions and cross shard
         // dependencies are empty.
@@ -418,7 +453,7 @@ mod tests {
         transactions.push(txns_from_sender[txn_from_sender_index].clone());
 
         let partitioner = ShardedBlockPartitioner::new(num_shards);
-        let partitioned_txns = partitioner.partition(transactions.clone());
+        let partitioned_txns = partitioner.partition(transactions.clone(), 1);
         assert_eq!(partitioned_txns.len(), num_shards);
         assert_eq!(partitioned_txns[0].len(), 6);
         assert_eq!(partitioned_txns[1].len(), 2);
@@ -466,7 +501,7 @@ mod tests {
         ];
 
         let partitioner = ShardedBlockPartitioner::new(num_shards);
-        let partitioned_chunks = partitioner.partition(transactions);
+        let partitioned_chunks = partitioner.partition(transactions, 1);
         assert_eq!(partitioned_chunks.len(), 2 * num_shards);
 
         // In first round of the partitioning, we should have txn0, txn1 and txn2 in shard 0 and
@@ -582,7 +617,7 @@ mod tests {
             accounts.push(sender)
         }
         let partitioner = ShardedBlockPartitioner::new(num_shards);
-        let partitioned_txns = partitioner.partition(transactions);
+        let partitioned_txns = partitioner.partition(transactions, 1);
         // Build a map of storage location to corresponding shards in first round
         // and ensure that no storage location is present in more than one shard.
         let mut storage_location_to_shard_map = HashMap::new();

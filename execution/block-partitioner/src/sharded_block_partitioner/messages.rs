@@ -1,14 +1,14 @@
 // Copyright © Aptos Foundation
 
 use crate::sharded_block_partitioner::{
-    dependency_analyzer::{RWSet, RWSetWithTxnIndex},
+    dependency_analysis::{RWSet, RWSetWithTxnIndex},
     types::{TransactionsChunk, TxnIndex},
 };
 use aptos_types::transaction::analyzed_transaction::AnalyzedTransaction;
 use std::sync::Arc;
 
 pub enum ControlMsg {
-    FilterCrossShardDepReq(FilterTxnsWithCrossShardDep),
+    DiscardCrossShardDepReq(DiscardTxnsWithCrossShardDep),
     AddCrossShardDepReq(AddTxnsWithCrossShardDep),
     Stop,
 }
@@ -21,14 +21,14 @@ pub enum CrossShardMsg {
     AcceptedTxnsMsg(usize),
 }
 
-pub struct FilterTxnsWithCrossShardDep {
+pub struct DiscardTxnsWithCrossShardDep {
     pub transactions: Vec<AnalyzedTransaction>,
     // The frozen dependencies in previous chunks.
     pub prev_rounds_rw_set_with_index: Arc<Vec<RWSetWithTxnIndex>>,
     pub prev_rounds_frozen_chunks: Arc<Vec<TransactionsChunk>>,
 }
 
-impl FilterTxnsWithCrossShardDep {
+impl DiscardTxnsWithCrossShardDep {
     pub fn new(
         transactions: Vec<AnalyzedTransaction>,
         prev_rounds_rw_set_with_index: Arc<Vec<RWSetWithTxnIndex>>,

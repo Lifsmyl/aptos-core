@@ -48,10 +48,16 @@ impl RWSet {
 }
 
 #[derive(Default, Clone, Debug)]
-// Contains a list of storage location along with the maximum transaction index in this shard
-// that has taken a read/write lock on this storage location. This is only available once we
-// have frozen the transactions in the shard.
-// Please note that the index is the global index which includes the offset of the shard.
+/// Contains a list of storage location along with the maximum transaction index in this shard
+/// that has taken a read/write lock on this storage location.  For example, if the chunk contains 3
+/// transactions with read/write set as follows:
+/// Txn 0: Read set: [A, B, C]
+/// Txn 1: Read set: [A, B]
+/// Txn 2: Read set: [A]
+/// Then the RWSetWithTxnIndex will be:
+/// Read set: {A: 2, B: 1, C: 0}
+/// Similar applies for the write set.
+/// Please note that the index is the global index which includes the offset of the shard.
 pub struct RWSetWithTxnIndex {
     read_set: Arc<HashMap<StorageLocation, TxnIndex>>,
     write_set: Arc<HashMap<StorageLocation, TxnIndex>>,

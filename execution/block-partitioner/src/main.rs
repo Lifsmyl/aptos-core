@@ -8,10 +8,7 @@ use aptos_types::transaction::analyzed_transaction::AnalyzedTransaction;
 use clap::Parser;
 use rand::{rngs::OsRng, Rng};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use std::{
-    sync::Mutex,
-    time::{Instant, SystemTime, UNIX_EPOCH},
-};
+use std::{sync::Mutex, time::Instant};
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -52,25 +49,13 @@ fn main() {
         })
         .collect();
 
-    // profile the time taken
     let partitioner = ShardedBlockPartitioner::new(args.num_shards);
     for _ in 0..args.num_blocks {
         let transactions = transactions.clone();
         println!("Starting to partition");
-        let current_time = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("Failed to retrieve current time")
-            .as_millis();
-        // print current time
-        println!("Current time: {:?}", current_time);
         let now = Instant::now();
-        partitioner.partition(transactions);
+        partitioner.partition(transactions, 1);
         let elapsed = now.elapsed();
-        let current_time = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("Failed to retrieve current time")
-            .as_millis();
-        println!("partition end time from main {:?}", current_time);
         println!("Time taken to partition: {:?}", elapsed);
     }
 }
