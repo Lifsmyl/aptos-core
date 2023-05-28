@@ -29,6 +29,14 @@ pub fn generate_test_account() -> TestAccount {
     }
 }
 
+pub fn generate_test_account_for_address(account_address: AccountAddress) -> TestAccount {
+    TestAccount {
+        account_address,
+        private_key: Ed25519PrivateKey::generate_for_testing(),
+        sequence_number: 0,
+    }
+}
+
 pub fn create_no_dependency_transaction(num_transactions: usize) -> Vec<AnalyzedTransaction> {
     let private_key = Ed25519PrivateKey::generate_for_testing();
     let public_key = private_key.public_key();

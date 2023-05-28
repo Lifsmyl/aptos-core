@@ -2,7 +2,7 @@
 
 use crate::sharded_block_partitioner::{
     dependency_analyzer::{RWSet, RWSetWithTxnIndex},
-    TransactionChunk, TxnIndex,
+    types::{TransactionsChunk, TxnIndex},
 };
 use aptos_types::transaction::analyzed_transaction::AnalyzedTransaction;
 use std::sync::Arc;
@@ -25,14 +25,14 @@ pub struct FilterTxnsWithCrossShardDep {
     pub transactions: Vec<AnalyzedTransaction>,
     // The frozen dependencies in previous chunks.
     pub prev_rounds_rw_set_with_index: Arc<Vec<RWSetWithTxnIndex>>,
-    pub prev_rounds_frozen_chunks: Arc<Vec<TransactionChunk>>,
+    pub prev_rounds_frozen_chunks: Arc<Vec<TransactionsChunk>>,
 }
 
 impl FilterTxnsWithCrossShardDep {
     pub fn new(
         transactions: Vec<AnalyzedTransaction>,
         prev_rounds_rw_set_with_index: Arc<Vec<RWSetWithTxnIndex>>,
-        prev_rounds_frozen_chunks: Arc<Vec<TransactionChunk>>,
+        prev_rounds_frozen_chunks: Arc<Vec<TransactionsChunk>>,
     ) -> Self {
         Self {
             transactions,
@@ -45,7 +45,7 @@ impl FilterTxnsWithCrossShardDep {
 pub struct AddTxnsWithCrossShardDep {
     pub transactions: Vec<AnalyzedTransaction>,
     pub index_offset: TxnIndex,
-    pub prev_rounds_frozen_chunks: Arc<Vec<TransactionChunk>>,
+    pub prev_rounds_frozen_chunks: Arc<Vec<TransactionsChunk>>,
     // The frozen dependencies in previous chunks.
     pub prev_rounds_rw_set_with_index: Arc<Vec<RWSetWithTxnIndex>>,
 }
@@ -54,7 +54,7 @@ impl AddTxnsWithCrossShardDep {
     pub fn new(
         transactions: Vec<AnalyzedTransaction>,
         index_offset: TxnIndex,
-        prev_rounds_frozen_chunks: Arc<Vec<TransactionChunk>>,
+        prev_rounds_frozen_chunks: Arc<Vec<TransactionsChunk>>,
         prev_rounds_rw_set_with_index: Arc<Vec<RWSetWithTxnIndex>>,
     ) -> Self {
         Self {
@@ -67,14 +67,14 @@ impl AddTxnsWithCrossShardDep {
 }
 
 pub struct PartitioningBlockResponse {
-    pub frozen_chunk: TransactionChunk,
+    pub frozen_chunk: TransactionsChunk,
     pub rw_set_with_index: RWSetWithTxnIndex,
     pub rejected_txns: Vec<AnalyzedTransaction>,
 }
 
 impl PartitioningBlockResponse {
     pub fn new(
-        frozen_chunk: TransactionChunk,
+        frozen_chunk: TransactionsChunk,
         frozen_dependencies: RWSetWithTxnIndex,
         rejected_txns: Vec<AnalyzedTransaction>,
     ) -> Self {

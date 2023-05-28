@@ -1,5 +1,7 @@
 // Copyright © Aptos Foundation
 // SPDX-License-Identifier: Apache-2.0
+// Copyright © Aptos Foundation
+// SPDX-License-Identifier: Apache-2.0
 use crate::sharded_block_partitioner::{
     conflict_detector::CrossShardConflictDetector,
     dependency_analyzer::{RWSet, RWSetWithTxnIndex},
@@ -7,7 +9,7 @@ use crate::sharded_block_partitioner::{
         AddTxnsWithCrossShardDep, ControlMsg, CrossShardMsg, FilterTxnsWithCrossShardDep,
         PartitioningBlockResponse,
     },
-    ShardId, TransactionChunk, TransactionWithDependencies,
+    types::{ShardId, TransactionWithDependencies, TransactionsChunk},
 };
 use aptos_logger::trace;
 use std::sync::{
@@ -173,7 +175,8 @@ impl PartitioningShard {
             .map(|(txn, dependencies)| TransactionWithDependencies::new(txn, dependencies))
             .collect::<Vec<TransactionWithDependencies>>();
 
-        let frozen_chunk = TransactionChunk::new(index_offset, accepted_txns_with_dependencies);
+        let frozen_chunk = TransactionsChunk::new(index_offset, accepted_txns_with_dependencies);
+        drop(prev_rounds_frozen_chunks);
         // send the result back to the controller
         self.result_tx
             .send(PartitioningBlockResponse::new(
