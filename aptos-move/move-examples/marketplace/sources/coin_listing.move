@@ -541,12 +541,8 @@ module coin_listing {
 #[test_only]
 module listing_tests {
     use std::option;
-    use std::signer;
-    use std::string;
-    use std::vector;
 
-    use aptos_framework::account;
-    use aptos_framework::aptos_coin::{Self, AptosCoin};
+    use aptos_framework::aptos_coin::AptosCoin;
     use aptos_framework::coin;
     use aptos_framework::object::{Self, Object};
     use aptos_framework::timestamp;
@@ -554,11 +550,11 @@ module listing_tests {
     use aptos_token::token as tokenv1;
 
     use aptos_token_objects::token::Token;
-    use aptos_token_objects::aptos_token;
 
-    use marketplace::fee_schedule::{Self, FeeSchedule};
-    use marketplace::listing::{Self, Listing};
     use marketplace::coin_listing;
+    use marketplace::fee_schedule::FeeSchedule;
+    use marketplace::listing::{Self, Listing};
+    use marketplace::test_utils;
 
     fun test_fixed_price(
         aptos_framework: &signer,
@@ -567,7 +563,7 @@ module listing_tests {
         purchaser: &signer,
     ) {
         let (marketplace_addr, seller_addr, purchaser_addr) =
-            setup(aptos_framework, marketplace, seller, purchaser);
+            test_utils::setup(aptos_framework, marketplace, seller, purchaser);
 
         let (token, fee_schedule, listing) = fixed_price_listing(marketplace, seller);
 
@@ -594,7 +590,7 @@ module listing_tests {
         purchaser: &signer,
     ) {
         let (marketplace_addr, seller_addr, _purchaser_addr) =
-            setup(aptos_framework, marketplace, seller, purchaser);
+            test_utils::setup(aptos_framework, marketplace, seller, purchaser);
 
         let (token, _fee_schedule, listing) = fixed_price_listing(marketplace, seller);
 
@@ -613,7 +609,7 @@ module listing_tests {
         purchaser: &signer,
     ) {
         let (marketplace_addr, seller_addr, purchaser_addr) =
-            setup(aptos_framework, marketplace, seller, purchaser);
+            test_utils::setup(aptos_framework, marketplace, seller, purchaser);
 
         let (token, fee_schedule, listing) = auction_listing(marketplace, seller);
         assert!(coin::balance<AptosCoin>(marketplace_addr) == 1, 0);
@@ -645,7 +641,7 @@ module listing_tests {
         purchaser: &signer,
     ) {
         let (marketplace_addr, seller_addr, purchaser_addr) =
-            setup(aptos_framework, marketplace, seller, purchaser);
+            test_utils::setup(aptos_framework, marketplace, seller, purchaser);
 
         let (token, _fee_schedule, listing) = auction_listing(marketplace, seller);
         assert!(coin::balance<AptosCoin>(marketplace_addr) == 1, 0);
@@ -680,7 +676,7 @@ module listing_tests {
         purchaser: &signer,
     ) {
         let (marketplace_addr, seller_addr, purchaser_addr) =
-            setup(aptos_framework, marketplace, seller, purchaser);
+            test_utils::setup(aptos_framework, marketplace, seller, purchaser);
 
         let (token, _fee_schedule, listing) = auction_listing(marketplace, seller);
         assert!(coin::balance<AptosCoin>(marketplace_addr) == 1, 0);
@@ -695,7 +691,7 @@ module listing_tests {
         assert!(coin_listing::auction_end_time<AptosCoin>(listing) == end_time, 0);
 
         // Return the bid and insert a new bid and affect end timing
-        increment_timestamp(150);
+        test_utils::increment_timestamp(150);
         coin_listing::bid<AptosCoin>(purchaser, listing, 150);
         assert!(coin::balance<AptosCoin>(marketplace_addr) == 5, 0);
         assert!(coin::balance<AptosCoin>(seller_addr) == 9997, 0);
@@ -703,7 +699,7 @@ module listing_tests {
         assert!(coin_listing::auction_end_time<AptosCoin>(listing) != end_time, 0);
 
         // End the auction as out of time
-        increment_timestamp(150);
+        test_utils::increment_timestamp(150);
         coin_listing::complete_auction<AptosCoin>(listing);
         assert!(object::owner(token) == purchaser_addr, 0);
         assert!(coin::balance<AptosCoin>(marketplace_addr) == 6, 0);
@@ -718,13 +714,13 @@ module listing_tests {
         purchaser: &signer,
     ) {
         let (marketplace_addr, seller_addr, _purchaser_addr) =
-            setup(aptos_framework, marketplace, seller, purchaser);
+            test_utils::setup(aptos_framework, marketplace, seller, purchaser);
 
         let (token, _fee_schedule, listing) = auction_listing(marketplace, seller);
         assert!(coin::balance<AptosCoin>(marketplace_addr) == 1, 0);
         assert!(coin::balance<AptosCoin>(seller_addr) == 9999, 0);
 
-        increment_timestamp(200);
+        test_utils::increment_timestamp(200);
         coin_listing::complete_auction<AptosCoin>(listing);
 
         assert!(object::owner(token) == seller_addr, 0);
@@ -740,10 +736,10 @@ module listing_tests {
         seller: &signer,
         purchaser: &signer,
     ) {
-        setup(aptos_framework, marketplace, seller, purchaser);
+        test_utils::setup(aptos_framework, marketplace, seller, purchaser);
 
-        let token = mint(seller);
-        let fee_schedule = fee_schedule(marketplace);
+        let token = test_utils::mint_tokenv2(seller);
+        let fee_schedule = test_utils::fee_schedule(marketplace);
         let listing = coin_listing::init_fixed_price<AptosCoin>(
             seller,
             object::convert(token),
@@ -763,10 +759,10 @@ module listing_tests {
         seller: &signer,
         purchaser: &signer,
     ) {
-        setup(aptos_framework, marketplace, seller, purchaser);
+        test_utils::setup(aptos_framework, marketplace, seller, purchaser);
 
-        let token = mint(seller);
-        let fee_schedule = fee_schedule(marketplace);
+        let token = test_utils::mint_tokenv2(seller);
+        let fee_schedule = test_utils::fee_schedule(marketplace);
         let listing = coin_listing::init_auction<AptosCoin>(
             seller,
             object::convert(token),
@@ -790,10 +786,10 @@ module listing_tests {
         seller: &signer,
         purchaser: &signer,
     ) {
-        setup(aptos_framework, marketplace, seller, purchaser);
+        test_utils::setup(aptos_framework, marketplace, seller, purchaser);
 
         let (_token, _fee_schedule, listing) = auction_listing(marketplace, seller);
-        increment_timestamp(200);
+        test_utils::increment_timestamp(200);
         coin_listing::bid<AptosCoin>(purchaser, listing, 1000);
     }
 
@@ -805,10 +801,10 @@ module listing_tests {
         seller: &signer,
         purchaser: &signer,
     ) {
-        setup(aptos_framework, marketplace, seller, purchaser);
+        test_utils::setup(aptos_framework, marketplace, seller, purchaser);
 
         let (_token, _fee_schedule, listing) = auction_listing(marketplace, seller);
-        increment_timestamp(200);
+        test_utils::increment_timestamp(200);
         coin_listing::purchase<AptosCoin>(purchaser, listing);
     }
 
@@ -820,10 +816,10 @@ module listing_tests {
         seller: &signer,
         purchaser: &signer,
     ) {
-         setup(aptos_framework, marketplace, seller, purchaser);
+         test_utils::setup(aptos_framework, marketplace, seller, purchaser);
 
-        let token = mint(seller);
-        let fee_schedule = fee_schedule(marketplace);
+        let token = test_utils::mint_tokenv2(seller);
+        let fee_schedule = test_utils::fee_schedule(marketplace);
         let listing = coin_listing::init_fixed_price<AptosCoin>(
             seller,
             object::convert(token),
@@ -843,7 +839,7 @@ module listing_tests {
         seller: &signer,
         purchaser: &signer,
     ) {
-        setup(aptos_framework, marketplace, seller, purchaser);
+        test_utils::setup(aptos_framework, marketplace, seller, purchaser);
 
         let (_token, _fee_schedule, listing) = auction_listing(marketplace, seller);
         coin_listing::bid<AptosCoin>(purchaser, listing, 100000);
@@ -857,7 +853,7 @@ module listing_tests {
         seller: &signer,
         purchaser: &signer,
     ) {
-        setup(aptos_framework, marketplace, seller, purchaser);
+        test_utils::setup(aptos_framework, marketplace, seller, purchaser);
 
         let (_token, _fee_schedule, listing) = auction_listing(marketplace, seller);
         coin_listing::bid<AptosCoin>(purchaser, listing, 100);
@@ -872,10 +868,10 @@ module listing_tests {
         seller: &signer,
         purchaser: &signer,
     ) {
-        setup(aptos_framework, marketplace, seller, purchaser);
+        test_utils::setup(aptos_framework, marketplace, seller, purchaser);
 
-        let token = mint(seller);
-        let fee_schedule = fee_schedule(marketplace);
+        let token = test_utils::mint_tokenv2(seller);
+        let fee_schedule = test_utils::fee_schedule(marketplace);
         let listing = coin_listing::init_auction<AptosCoin>(
             seller,
             object::convert(token),
@@ -899,7 +895,7 @@ module listing_tests {
         seller: &signer,
         purchaser: &signer,
     ) {
-        setup(aptos_framework, marketplace, seller, purchaser);
+        test_utils::setup(aptos_framework, marketplace, seller, purchaser);
 
         let (_token, _fee_schedule, listing) = fixed_price_listing(marketplace, seller);
         coin_listing::auction_end_time<AptosCoin>(listing);
@@ -913,10 +909,10 @@ module listing_tests {
         seller: &signer,
         purchaser: &signer,
     ) {
-        setup(aptos_framework, marketplace, seller, purchaser);
+        test_utils::setup(aptos_framework, marketplace, seller, purchaser);
 
-        let token = mint(seller);
-        let fee_schedule = fee_schedule(marketplace);
+        let token = test_utils::mint_tokenv2(seller);
+        let fee_schedule = test_utils::fee_schedule(marketplace);
         let listing = coin_listing::init_auction<AptosCoin>(
             seller,
             object::convert(token),
@@ -940,106 +936,20 @@ module listing_tests {
         seller: &signer,
         purchaser: &signer,
     ) {
-        setup(aptos_framework, marketplace, seller, purchaser);
+        test_utils::setup(aptos_framework, marketplace, seller, purchaser);
 
         let (_token, _fee_schedule, listing) = fixed_price_listing(marketplace, seller);
         coin_listing::end_fixed_price<AptosCoin>(purchaser, listing);
     }
 
-    inline fun setup(
-        aptos_framework: &signer,
-        marketplace: &signer,
-        seller: &signer,
-        purchaser: &signer,
-    ): (address, address, address) {
-        timestamp::set_time_has_started_for_testing(aptos_framework);
-        let (burn_cap, mint_cap) = aptos_coin::initialize_for_test(aptos_framework);
-
-        let marketplace_addr = signer::address_of(marketplace);
-        account::create_account_for_test(marketplace_addr);
-        coin::register<AptosCoin>(marketplace);
-
-        let seller_addr = signer::address_of(seller);
-        account::create_account_for_test(seller_addr);
-        coin::register<AptosCoin>(seller);
-
-        let purchaser_addr = signer::address_of(purchaser);
-        account::create_account_for_test(purchaser_addr);
-        coin::register<AptosCoin>(purchaser);
-
-        let coins = coin::mint(10000, &mint_cap);
-        coin::deposit(seller_addr, coins);
-        let coins = coin::mint(10000, &mint_cap);
-        coin::deposit(purchaser_addr, coins);
-
-        coin::destroy_burn_cap(burn_cap);
-        coin::destroy_mint_cap(mint_cap);
-
-        (marketplace_addr, seller_addr, purchaser_addr)
-    }
-
-    fun fee_schedule(seller: &signer): Object<FeeSchedule> {
-        fee_schedule::init_internal(
-            seller,
-            signer::address_of(seller),
-            2,
-            1,
-            100,
-            1,
-        )
-    }
-
-    inline fun increment_timestamp(seconds: u64) {
-        timestamp::update_global_time_for_test(timestamp::now_microseconds() + (seconds * 1000000));
-    }
-
     // Objects and TokenV2 stuff
-
-    fun mint(seller: &signer): Object<Token> {
-        let seller_addr = signer::address_of(seller);
-        let collection_name = string::utf8(b"collection_name");
-        let token_creation_num = account::get_guid_next_creation_num(seller_addr);
-
-        aptos_token::create_collection(
-            seller,
-            string::utf8(b"collection description"),
-            1,
-            collection_name,
-            string::utf8(b"collection uri"),
-            true,
-            true,
-            true,
-            true,
-            true,
-            true,
-            true,
-            true,
-            true,
-            1,
-            100,
-        );
-
-        aptos_token::mint(
-            seller,
-            collection_name,
-            string::utf8(b"description"),
-            string::utf8(b"token_name"),
-            string::utf8(b"uri"),
-            vector::empty(),
-            vector::empty(),
-            vector::empty(),
-        );
-
-        let obj_addr = object::create_guid_object_address(seller_addr, token_creation_num);
-        object::address_to_object(obj_addr)
-    }
 
     inline fun fixed_price_listing(
         marketplace: &signer,
         seller: &signer,
     ): (Object<Token>, Object<FeeSchedule>, Object<Listing>) {
-        let token = mint(seller);
-        let fee_schedule = fee_schedule(marketplace);
+        let token = test_utils::mint_tokenv2(seller);
+        let fee_schedule = test_utils::fee_schedule(marketplace);
         let listing = coin_listing::init_fixed_price<AptosCoin>(
             seller,
             object::convert(token),
@@ -1054,8 +964,8 @@ module listing_tests {
         marketplace: &signer,
         seller: &signer,
     ): (Object<Token>, Object<FeeSchedule>, Object<Listing>) {
-        let token = mint(seller);
-        let fee_schedule = fee_schedule(marketplace);
+        let token = test_utils::mint_tokenv2(seller);
+        let fee_schedule = test_utils::fee_schedule(marketplace);
         let listing = coin_listing::init_auction<AptosCoin>(
             seller,
             object::convert(token),
@@ -1080,7 +990,7 @@ module listing_tests {
         purchaser: &signer,
     ) {
         let (_marketplace_addr, _seller_addr, purchaser_addr) =
-            setup(aptos_framework, marketplace, seller, purchaser);
+            test_utils::setup(aptos_framework, marketplace, seller, purchaser);
         tokenv1::opt_in_direct_transfer(purchaser, true);
 
         let (token_id, _fee_schedule, listing) = fixed_price_listing_for_tokenv1(marketplace, seller);
@@ -1096,7 +1006,7 @@ module listing_tests {
         purchaser: &signer,
     ) {
         let (_marketplace_addr, _seller_addr, purchaser_addr) =
-            setup(aptos_framework, marketplace, seller, purchaser);
+            test_utils::setup(aptos_framework, marketplace, seller, purchaser);
         tokenv1::opt_in_direct_transfer(purchaser, true);
 
         let (token_id, _fee_schedule, listing) = auction_listing_for_tokenv1(marketplace, seller);
@@ -1112,7 +1022,7 @@ module listing_tests {
         purchaser: &signer,
     ) {
         let (_marketplace_addr, _seller_addr, purchaser_addr) =
-            setup(aptos_framework, marketplace, seller, purchaser);
+            test_utils::setup(aptos_framework, marketplace, seller, purchaser);
 
         let (token_id, _fee_schedule, listing) = auction_listing_for_tokenv1(marketplace, seller);
         let token_object = listing::listed_object(listing);
@@ -1121,52 +1031,14 @@ module listing_tests {
         assert!(tokenv1::balance_of(purchaser_addr, token_id) == 1, 0);
     }
 
-    fun mint_tokenv1(seller: &signer): tokenv1::TokenId {
-        let collection_name = string::utf8(b"collection_name");
-        let token_name = string::utf8(b"token_name");
-
-        tokenv1::create_collection(
-            seller,
-            collection_name,
-            string::utf8(b"Collection: Hello, World"),
-            string::utf8(b"https://aptos.dev"),
-            1,
-            vector[true, true, true],
-        );
-
-        tokenv1::create_token_script(
-            seller,
-            collection_name,
-            token_name,
-            string::utf8(b"Hello, Token"),
-            1,
-            1,
-            string::utf8(b"https://aptos.dev"),
-            signer::address_of(seller),
-            100,
-            0,
-            vector[true, true, true, true, true],
-            vector::empty(),
-            vector::empty(),
-            vector::empty(),
-        );
-
-        tokenv1::create_token_id_raw(
-            signer::address_of(seller),
-            collection_name,
-            token_name,
-            0,
-        )
-    }
-
     inline fun fixed_price_listing_for_tokenv1(
         marketplace: &signer,
         seller: &signer,
     ): (tokenv1::TokenId, Object<FeeSchedule>, Object<Listing>) {
-        let token_id = mint_tokenv1(seller);
+        let token_id = test_utils::mint_tokenv1(seller);
         let (creator_addr, collection_name, token_name, property_version) =
             tokenv1::get_token_id_fields(&token_id);
-        let fee_schedule = fee_schedule(marketplace);
+        let fee_schedule = test_utils::fee_schedule(marketplace);
         let listing = coin_listing::init_fixed_price_for_tokenv1<AptosCoin>(
             seller,
             creator_addr,
@@ -1184,10 +1056,10 @@ module listing_tests {
         marketplace: &signer,
         seller: &signer,
     ): (tokenv1::TokenId, Object<FeeSchedule>, Object<Listing>) {
-        let token_id = mint_tokenv1(seller);
+        let token_id = test_utils::mint_tokenv1(seller);
         let (creator_addr, collection_name, token_name, property_version) =
             tokenv1::get_token_id_fields(&token_id);
-        let fee_schedule = fee_schedule(marketplace);
+        let fee_schedule = test_utils::fee_schedule(marketplace);
         let listing = coin_listing::init_auction_for_tokenv1<AptosCoin>(
             seller,
             creator_addr,
