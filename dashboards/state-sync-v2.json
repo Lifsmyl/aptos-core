@@ -979,13 +979,7 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              }
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] }
             },
             "overrides": []
           },
@@ -1034,13 +1028,7 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              }
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] }
             },
             "overrides": []
           },
@@ -1089,13 +1077,7 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              }
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] }
             },
             "overrides": []
           },
@@ -1144,13 +1126,7 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              }
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] }
             },
             "overrides": []
           },
@@ -1199,13 +1175,7 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              }
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] }
             },
             "overrides": []
           },
@@ -1254,13 +1224,7 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              }
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] }
             },
             "overrides": []
           },
@@ -1309,13 +1273,7 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              }
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] }
             },
             "overrides": []
           },
@@ -1364,13 +1322,7 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              }
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] }
             },
             "overrides": []
           },
@@ -1419,13 +1371,7 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              },
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] },
               "unit": "s"
             },
             "overrides": []
@@ -1476,13 +1422,7 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              },
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] },
               "unit": "s"
             },
             "overrides": [
@@ -1542,13 +1482,7 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              }
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] }
             },
             "overrides": []
           },
@@ -1597,13 +1531,7 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              }
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] }
             },
             "overrides": []
           },
@@ -1652,13 +1580,7 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              }
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] }
             },
             "overrides": []
           },
@@ -1720,13 +1642,7 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              }
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] }
             },
             "overrides": []
           },
@@ -1775,13 +1691,7 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              }
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] }
             },
             "overrides": []
           },
@@ -1830,13 +1740,7 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              }
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] }
             },
             "overrides": []
           },
@@ -1885,13 +1789,7 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              }
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] }
             },
             "overrides": []
           },
@@ -1940,13 +1838,7 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              }
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] }
             },
             "overrides": []
           },
@@ -1995,13 +1887,7 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              },
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] },
               "unit": "s"
             },
             "overrides": []
@@ -2164,9 +2050,10 @@
             "minVizWidth": 0,
             "orientation": "horizontal",
             "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-            "showUnfilled": true
+            "showUnfilled": true,
+            "valueMode": "color"
           },
-          "pluginVersion": "9.1.1",
+          "pluginVersion": "9.5.3-cloud.2.0cb5a501",
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${Datasource}" },
@@ -2249,9 +2136,10 @@
             "minVizWidth": 0,
             "orientation": "horizontal",
             "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-            "showUnfilled": true
+            "showUnfilled": true,
+            "valueMode": "color"
           },
-          "pluginVersion": "9.1.1",
+          "pluginVersion": "9.5.3-cloud.2.0cb5a501",
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${Datasource}" },
@@ -2354,17 +2242,11 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              }
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] }
             },
             "overrides": []
           },
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 68 },
           "id": 52,
           "options": {
             "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
@@ -2409,17 +2291,11 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              }
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] }
             },
             "overrides": []
           },
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 68 },
           "id": 54,
           "options": {
             "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
@@ -2464,18 +2340,12 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              },
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] },
               "unit": "s"
             },
             "overrides": []
           },
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 76 },
           "id": 50,
           "options": {
             "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
@@ -2530,18 +2400,12 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              },
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] },
               "unit": "s"
             },
             "overrides": []
           },
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 76 },
           "id": 51,
           "options": {
             "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
@@ -2587,17 +2451,11 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              }
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] }
             },
             "overrides": []
           },
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 84 },
           "id": 55,
           "options": {
             "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
@@ -2642,17 +2500,11 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              }
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] }
             },
             "overrides": []
           },
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 84 },
           "id": 53,
           "options": {
             "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
@@ -2669,6 +2521,110 @@
             }
           ],
           "title": "Storage errors (per second)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${Datasource}" },
+          "description": "New subscription events seen at the server",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": { "type": "linear" },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": { "group": "A", "mode": "none" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] },
+              "unit": "none"
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 92 },
+          "id": 97,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${Datasource}" },
+              "editorMode": "code",
+              "exemplar": true,
+              "expr": "rate(aptos_storage_service_server_subscription_event{chain_name=~\"$chain_name\", namespace=~\"$namespace\", kubernetes_pod_name=~\"$kubernetes_pod_name\", role=~\"$role\",event=\"subscription_event_add\"}[1m])",
+              "interval": "",
+              "legendFormat": "{{kubernetes_pod_name}}-{{role}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "New subscription events",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${Datasource}" },
+          "description": "Expired subscriptions seen at the server",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": { "type": "linear" },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": { "group": "A", "mode": "none" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] },
+              "unit": "none"
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 92 },
+          "id": 99,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${Datasource}" },
+              "editorMode": "code",
+              "exemplar": true,
+              "expr": "rate(aptos_storage_service_server_subscription_event{chain_name=~\"$chain_name\", namespace=~\"$namespace\", kubernetes_pod_name=~\"$kubernetes_pod_name\", role=~\"$role\",event=\"subscription_event_expire\"}[1m])",
+              "interval": "",
+              "legendFormat": "{{kubernetes_pod_name}}-{{role}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Expired subscription events",
           "type": "timeseries"
         },
         {
@@ -2697,18 +2653,12 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              },
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] },
               "unit": "percent"
             },
             "overrides": []
           },
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 100 },
           "id": 80,
           "options": {
             "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
@@ -2731,7 +2681,7 @@
         },
         {
           "datasource": { "type": "prometheus", "uid": "${Datasource}" },
-          "description": "The compression ratios of sent network messages",
+          "description": "The compression ratios of sent network messages (i.e., compressed bytes / raw bytes)",
           "fieldConfig": {
             "defaults": {
               "color": { "mode": "palette-classic" },
@@ -2755,18 +2705,12 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              },
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] },
               "unit": "percent"
             },
             "overrides": []
           },
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 100 },
           "id": 88,
           "options": {
             "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
@@ -2814,18 +2758,12 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              },
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] },
               "unit": "none"
             },
             "overrides": []
           },
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 36 },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 108 },
           "id": 89,
           "options": {
             "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
@@ -2872,19 +2810,13 @@
                 "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": null },
-                  { "color": "red", "value": 80 }
-                ]
-              },
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 80 }] },
               "unit": "none"
             },
             "overrides": []
           },
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 36 },
-          "id": 97,
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 108 },
+          "id": 98,
           "options": {
             "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
             "tooltip": { "mode": "single", "sort": "none" }
@@ -2910,9 +2842,411 @@
       ],
       "title": "Storage Service Server",
       "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 68 },
+      "id": 103,
+      "panels": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${Datasource}" },
+          "description": "The average latencies taken from when data is first proposed, to when it is finally synced.",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": { "type": "linear" },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": { "group": "A", "mode": "none" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 80 }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 69 },
+          "id": 104,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "pluginVersion": "v1.0",
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${Datasource}" },
+              "editorMode": "code",
+              "expr": "rate(aptos_data_client_sync_latencies_sum{chain_name=~\"$chain_name\", namespace=~\"$namespace\", kubernetes_pod_name=~\"$kubernetes_pod_name\", role=~\"$role\", label=\"propose_to_sync_latency\"}[1m])/rate(aptos_data_client_sync_latencies_count{chain_name=~\"$chain_name\", namespace=~\"$namespace\", kubernetes_pod_name=~\"$kubernetes_pod_name\", role=~\"$role\", label=\"propose_to_sync_latency\"}[1m])",
+              "legendFormat": "{{kubernetes_pod_name}}-{{role}}-{{label}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Average propose to sync latencies (seconds)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${Datasource}" },
+          "description": "The latencies taken from when data is first proposed, to when it is finally synced.",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "continuous-GrYlRd" },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "gradientMode": "scheme",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "lineInterpolation": "smooth",
+                "lineWidth": 3,
+                "pointSize": 5,
+                "scaleDistribution": { "type": "linear" },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": { "group": "A", "mode": "none" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 80 }
+                ]
+              },
+              "unit": "s"
+            },
+            "overrides": [
+              {
+                "__systemRef": "hideSeriesFrom",
+                "matcher": {
+                  "id": "byNames",
+                  "options": { "mode": "exclude", "names": ["Value"], "prefix": "All except:", "readOnly": true }
+                },
+                "properties": [{ "id": "custom.hideFrom", "value": { "legend": false, "tooltip": false, "viz": true } }]
+              }
+            ]
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 69 },
+          "id": 102,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "pluginVersion": "v1.0",
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${Datasource}" },
+              "editorMode": "code",
+              "expr": "histogram_quantile(0.99, sum(rate(aptos_data_client_sync_latencies_bucket{chain_name=~\"$chain_name\", namespace=~\"$namespace\", kubernetes_pod_name=~\"$kubernetes_pod_name\",role=~\"$role\",label=\"propose_to_sync_latency\"}[$__rate_interval])) by (le))",
+              "legendFormat": "P99",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "${Datasource}" },
+              "editorMode": "code",
+              "expr": "histogram_quantile(0.70, sum(rate(aptos_data_client_sync_latencies_bucket{chain_name=~\"$chain_name\", namespace=~\"$namespace\", kubernetes_pod_name=~\"$kubernetes_pod_name\",role=~\"$role\",label=\"propose_to_sync_latency\"}[$__rate_interval])) by (le))",
+              "hide": false,
+              "legendFormat": "P70",
+              "range": true,
+              "refId": "B"
+            }
+          ],
+          "title": "Propose to sync latencies (seconds)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${Datasource}" },
+          "description": "The average latencies taken from when data is first proposed, to when it is finally seen.",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": { "type": "linear" },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": { "group": "A", "mode": "none" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 80 }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 77 },
+          "id": 106,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "pluginVersion": "v1.0",
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${Datasource}" },
+              "editorMode": "code",
+              "expr": "rate(aptos_data_client_sync_latencies_sum{chain_name=~\"$chain_name\", namespace=~\"$namespace\", kubernetes_pod_name=~\"$kubernetes_pod_name\", role=~\"$role\", label=\"propose_to_seen_latency\"}[1m])/rate(aptos_data_client_sync_latencies_count{chain_name=~\"$chain_name\", namespace=~\"$namespace\", kubernetes_pod_name=~\"$kubernetes_pod_name\", role=~\"$role\", label=\"propose_to_seen_latency\"}[1m])",
+              "legendFormat": "{{kubernetes_pod_name}}-{{role}}-{{label}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Average propose to seen latencies (seconds)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${Datasource}" },
+          "description": "The latencies taken from when data is first proposed, to when it is finally seen.",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "continuous-GrYlRd" },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "gradientMode": "scheme",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "lineInterpolation": "smooth",
+                "lineWidth": 3,
+                "pointSize": 5,
+                "scaleDistribution": { "type": "linear" },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": { "group": "A", "mode": "none" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 80 }
+                ]
+              },
+              "unit": "s"
+            },
+            "overrides": [
+              {
+                "__systemRef": "hideSeriesFrom",
+                "matcher": {
+                  "id": "byNames",
+                  "options": { "mode": "exclude", "names": ["Value"], "prefix": "All except:", "readOnly": true }
+                },
+                "properties": [{ "id": "custom.hideFrom", "value": { "legend": false, "tooltip": false, "viz": true } }]
+              }
+            ]
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 77 },
+          "id": 107,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "pluginVersion": "v1.0",
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${Datasource}" },
+              "editorMode": "code",
+              "expr": "histogram_quantile(0.99, sum(rate(aptos_data_client_sync_latencies_bucket{chain_name=~\"$chain_name\", namespace=~\"$namespace\", kubernetes_pod_name=~\"$kubernetes_pod_name\",role=~\"$role\",label=\"propose_to_seen_latency\"}[$__rate_interval])) by (le))",
+              "legendFormat": "P99",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "${Datasource}" },
+              "editorMode": "code",
+              "expr": "histogram_quantile(0.70, sum(rate(aptos_data_client_sync_latencies_bucket{chain_name=~\"$chain_name\", namespace=~\"$namespace\", kubernetes_pod_name=~\"$kubernetes_pod_name\",role=~\"$role\",label=\"propose_to_seen_latency\"}[$__rate_interval])) by (le))",
+              "hide": false,
+              "legendFormat": "P70",
+              "range": true,
+              "refId": "B"
+            }
+          ],
+          "title": "Propose to seen latencies (seconds)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${Datasource}" },
+          "description": "The average latencies taken from when data is first seen, to when it is finally synced.",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": { "type": "linear" },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": { "group": "A", "mode": "none" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 80 }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 85 },
+          "id": 100,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "pluginVersion": "v1.0",
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${Datasource}" },
+              "editorMode": "code",
+              "expr": "rate(aptos_data_client_sync_latencies_sum{chain_name=~\"$chain_name\", namespace=~\"$namespace\", kubernetes_pod_name=~\"$kubernetes_pod_name\", role=~\"$role\", label=\"seen_to_sync_latency\"}[1m])/rate(aptos_data_client_sync_latencies_count{chain_name=~\"$chain_name\", namespace=~\"$namespace\", kubernetes_pod_name=~\"$kubernetes_pod_name\", role=~\"$role\", label=\"seen_to_sync_latency\"}[1m])",
+              "legendFormat": "{{kubernetes_pod_name}}-{{role}}-{{label}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Average seen to sync latencies (seconds)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${Datasource}" },
+          "description": "The latencies taken from when data is first seen, to when it is finally synced.",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "continuous-GrYlRd" },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "gradientMode": "scheme",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "lineInterpolation": "smooth",
+                "lineWidth": 3,
+                "pointSize": 5,
+                "scaleDistribution": { "type": "linear" },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": { "group": "A", "mode": "none" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 80 }
+                ]
+              },
+              "unit": "s"
+            },
+            "overrides": [
+              {
+                "__systemRef": "hideSeriesFrom",
+                "matcher": {
+                  "id": "byNames",
+                  "options": { "mode": "exclude", "names": ["Value"], "prefix": "All except:", "readOnly": true }
+                },
+                "properties": [{ "id": "custom.hideFrom", "value": { "legend": false, "tooltip": false, "viz": true } }]
+              }
+            ]
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 85 },
+          "id": 105,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "pluginVersion": "v1.0",
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${Datasource}" },
+              "editorMode": "code",
+              "expr": "histogram_quantile(0.99, sum(rate(aptos_data_client_sync_latencies_bucket{chain_name=~\"$chain_name\", namespace=~\"$namespace\", kubernetes_pod_name=~\"$kubernetes_pod_name\",role=~\"$role\",label=\"seen_to_sync_latency\"}[$__rate_interval])) by (le))",
+              "legendFormat": "P99",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "${Datasource}" },
+              "editorMode": "code",
+              "expr": "histogram_quantile(0.70, sum(rate(aptos_data_client_sync_latencies_bucket{chain_name=~\"$chain_name\", namespace=~\"$namespace\", kubernetes_pod_name=~\"$kubernetes_pod_name\",role=~\"$role\",label=\"seen_to_sync_latency\"}[$__rate_interval])) by (le))",
+              "hide": false,
+              "legendFormat": "P70",
+              "range": true,
+              "refId": "B"
+            }
+          ],
+          "title": "Seen to sync latencies (seconds)",
+          "type": "timeseries"
+        }
+      ],
+      "title": "Latency Monitor",
+      "type": "row"
     }
   ],
-  "refresh": "",
+  "refresh": false,
   "schemaVersion": 38,
   "style": "dark",
   "tags": ["aptos-core"],
@@ -2939,19 +3273,6 @@
         "regex": ".*Prometheus.*|.*Victoria.*|.*Telemetry.*",
         "skipUrlSync": false,
         "sort": 0,
-        "type": "datasource"
-      },
-      {
-        "description": "BigQuery data source",
-        "hide": 0,
-        "includeAll": false,
-        "multi": false,
-        "name": "BigQuery",
-        "options": [],
-        "query": "grafana-bigquery-datasource",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
         "type": "datasource"
       },
       {
@@ -3130,6 +3451,6 @@
   "timezone": "",
   "title": "state-sync-v2",
   "uid": "state_sync_v2",
-  "version": 3,
+  "version": 7,
   "weekStart": ""
 }
